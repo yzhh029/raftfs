@@ -26,13 +26,15 @@ namespace raftfs {
 
         class MetaRPCServer {
         public:
-            MetaRPCServer(int _port, RaftConsensus* _raft_state );
+            MetaRPCServer(int _port, std::shared_ptr<RaftConsensus> _raft_state );
 
             ~MetaRPCServer();
         private:
             const int port;
+            std::shared_ptr<RaftConsensus> raft_state;
             std::unique_ptr<TH::server::TSimpleServer> rpc_server;
-            RaftConsensus* raft_state;
+
+
 
         };
 

@@ -12,6 +12,7 @@ namespace raftfs {
         class RaftConsensus {
         public:
             RaftConsensus();
+            int64_t GetTerm() const {return currentTerm;}
         private:
             int64_t currentTerm;
 

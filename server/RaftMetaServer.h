@@ -20,8 +20,9 @@ namespace raftfs {
             void run();
 
         private:
+            std::shared_ptr<RaftConsensus> raft_state;
             MetaRPCServer rpc_server;
-            RaftConsensus* raft_state;
+
         };
     }
 }
