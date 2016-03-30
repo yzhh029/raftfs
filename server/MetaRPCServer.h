@@ -7,7 +7,7 @@
 
 // thrift headers
 #include <server/TSimpleServer.h>
-
+#include <memory>
 
 namespace TH = apache::thrift;
 
@@ -29,7 +29,7 @@ namespace raftfs {
             ~MetaRPCServer();
         private:
             const int port;
-            TH::server::TSimpleServer rpc_server;
+            std::unique_ptr<TH::server::TSimpleServer> rpc_server;
 
         };
 

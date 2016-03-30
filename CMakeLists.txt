@@ -12,6 +12,7 @@ if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
+include_directories("/usr/local/include/thrift/")
 add_subdirectory(server)
 
 add_executable(raftfs server/server_main.cpp)

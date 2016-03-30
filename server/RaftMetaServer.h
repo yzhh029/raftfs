@@ -15,7 +15,7 @@ namespace raftfs {
 
         class RaftMetaServer {
         public:
-            RaftMetaServer() : rpcServer() {}
+            RaftMetaServer() : rpcServer(12345) {}
             void run();
 
         private:

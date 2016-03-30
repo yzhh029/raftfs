@@ -36,7 +36,11 @@ namespace raftfs {
 
             processor->registerProcessor("RaftService", raftProcessor);
 
-            shared_ptr<TServerTransport> serverTransport(new )
+            shared_ptr<TServerTransport> serverTransport(new transport::TServerSocket(port));
+            shared_ptr<TTransportFactory> transportFactory(new transport::TBufferedTransportFactory());
+            shared_ptr<TProtocolFactory> protocolFactory(new TH::protocol::TBinaryProtocolFactory());
+
+            rpc_server.reset(new TSimpleServer(processor, serverTransport, transportFactory, protocolFactory));
 
         }
 

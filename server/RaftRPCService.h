@@ -9,7 +9,7 @@
 
 namespace raftfs {
     namespace  server {
-        class RaftRPCService : protocol::RaftServiceIf {
+        class RaftRPCService : virtual public protocol::RaftServiceIf {
         public:
             RaftRPCService() {}
 
