@@ -1,5 +1,5 @@
 
-namespace cpp raftfs.raft
+namespace cpp raftfs.protocol
 
 struct ReqVoteRequest {
 1: required i32 term;
