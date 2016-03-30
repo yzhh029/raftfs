@@ -5,6 +5,8 @@
 #ifndef RAFTFS_RAFTRPCSERVER_H
 #define RAFTFS_RAFTRPCSERVER_H
 
+#include "RaftConsensus.h"
+
 // thrift headers
 #include <server/TSimpleServer.h>
 #include <memory>
@@ -24,12 +26,13 @@ namespace raftfs {
 
         class MetaRPCServer {
         public:
-            MetaRPCServer(int _port);
+            MetaRPCServer(int _port, RaftConsensus* _raft_state );
 
             ~MetaRPCServer();
         private:
             const int port;
             std::unique_ptr<TH::server::TSimpleServer> rpc_server;
+            RaftConsensus* raft_state;
 
         };
 

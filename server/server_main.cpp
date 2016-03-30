@@ -8,10 +8,11 @@
 #include "RaftMetaServer.h"
 
 using namespace std;
+using namespace raftfs::server;
 
 int main() {
 
-    raftfs::server::RaftMetaServer server;
+    RaftMetaServer server;
     server.run();
     cout << "Hello, World!" << endl;
     return 0;

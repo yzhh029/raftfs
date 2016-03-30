@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "MetaRPCServer.h"
+#include "RaftConsensus.h"
 
 
 namespace raftfs {
@@ -15,11 +16,12 @@ namespace raftfs {
 
         class RaftMetaServer {
         public:
-            RaftMetaServer() : rpcServer(12345) {}
+            RaftMetaServer() ;
             void run();
 
         private:
-            MetaRPCServer rpcServer;
+            MetaRPCServer rpc_server;
+            RaftConsensus* raft_state;
         };
     }
 }

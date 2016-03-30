@@ -23,8 +23,8 @@ namespace raftfs {
 
     namespace server {
 
-        MetaRPCServer::MetaRPCServer(int _port)
-            : port(_port) {
+        MetaRPCServer::MetaRPCServer(int _port, RaftConsensus* _raft_state)
+            : port(_port), raft_state(_raft_state) {
 
             // RaftRPCService
             shared_ptr<TProcessor> raftProcessor(
