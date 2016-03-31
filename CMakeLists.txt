@@ -16,4 +16,6 @@ include_directories("/usr/local/include/thrift/")
 add_subdirectory(server)
 
 add_executable(raftfs server/server_main.cpp)
+add_executable(server_test test/server_test.cpp)
 target_link_libraries(raftfs ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
+target_link_libraries(server_test ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)

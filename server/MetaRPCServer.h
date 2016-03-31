@@ -8,6 +8,7 @@
 #include "RaftConsensus.h"
 
 // thrift headers
+#include <server/TThreadedServer.h>
 #include <server/TSimpleServer.h>
 #include <memory>
 
@@ -28,13 +29,12 @@ namespace raftfs {
         public:
             MetaRPCServer(int _port, std::shared_ptr<RaftConsensus> _raft_state );
 
+            void run();
+
             ~MetaRPCServer();
         private:
-            const int port;
             std::shared_ptr<RaftConsensus> raft_state;
             std::unique_ptr<TH::server::TSimpleServer> rpc_server;
-
-
 
         };
 

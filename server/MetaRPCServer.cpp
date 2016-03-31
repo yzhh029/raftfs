@@ -11,45 +11,44 @@
 #include "MetaRPCServer.h"
 #include "RaftService.h"
 #include "RaftRPCService.h"
-//#include <memory>
+#include <memory>
 #include <iostream>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 
 using namespace boost;
 using namespace TH;
 using namespace TH::server;
 using namespace std;
-
+using namespace raftfs::protocol;
 
 namespace raftfs {
 
     namespace server {
 
         MetaRPCServer::MetaRPCServer(int _port, std::shared_ptr<RaftConsensus> _raft_state)
-            : port(_port), raft_state(_raft_state) {
+            : raft_state(_raft_state) {
 
             // RaftRPCService
-            boost::shared_ptr<TProcessor> raftProcessor(
-                    new protocol::RaftServiceProcessor(
-                            boost::shared_ptr<server::RaftRPCService>(new server::RaftRPCService)
-                    ));
-
-            boost::shared_ptr<TMultiplexedProcessor> processor(new TMultiplexedProcessor);
-
-            processor->registerProcessor("RaftService", raftProcessor);
-
-            boost::shared_ptr<TServerTransport> serverTransport(new transport::TServerSocket(port));
-            boost::shared_ptr<TTransportFactory> transportFactory(new transport::TBufferedTransportFactory());
-            boost::shared_ptr<TProtocolFactory> protocolFactory(new TH::protocol::TBinaryProtocolFactory());
-
-            rpc_server.reset(new TSimpleServer(processor, serverTransport, transportFactory, protocolFactory));
+            rpc_server.reset(new TSimpleServer(
+                    boost::make_shared<RaftServiceProcessor>(boost::make_shared<RaftRPCService>()),
+                    boost::make_shared<TH::transport::TServerSocket>(_port),
+                    boost::make_shared<TH::transport::TBufferedTransportFactory>(),
+                    boost::make_shared<TH::protocol::TBinaryProtocolFactory>()
+            ));
 
             cout << raft_state->GetTerm() << endl;
         }
 
         MetaRPCServer::~MetaRPCServer() {
 
+        }
+
+
+        void MetaRPCServer::run() {
+            cout << "RPCserver start" << endl;
+            rpc_server->serve();
         }
 
 
