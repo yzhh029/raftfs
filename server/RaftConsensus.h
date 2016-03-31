@@ -6,6 +6,7 @@
 #define RAFTFS_RAFTCONSENSUS_H
 
 #include <stdint.h>
+#include <string>
 
 namespace raftfs {
     namespace server {
@@ -15,7 +16,7 @@ namespace raftfs {
             int64_t GetTerm() const {return currentTerm;}
         private:
             int64_t currentTerm;
-
+            std::string vote_for;
 
         };
     }

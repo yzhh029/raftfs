@@ -15,6 +15,10 @@ namespace raftfs {
 
             void RequestVote(protocol::ReqVoteResponse &_return, const protocol::ReqVoteRequest &vote) override ;
 
+            void AppendEntries(protocol::AppendEntriesResponse &_return,
+                                       const protocol::AppendEntriesRequest &append) override;
+
+
         };
     }
 }

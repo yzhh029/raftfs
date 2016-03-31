@@ -17,7 +17,7 @@ namespace raftfs {
         }
 
 
-        void RaftMetaServer::run() {
+        void RaftMetaServer::Run() {
             cout << "FS server start" << endl;
             rpc_server.run();
         }

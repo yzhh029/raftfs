@@ -17,7 +17,7 @@ namespace raftfs {
         class RaftMetaServer {
         public:
             RaftMetaServer() ;
-            void run();
+            void Run();
 
         private:
             std::shared_ptr<RaftConsensus> raft_state;

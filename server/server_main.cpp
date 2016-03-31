@@ -17,13 +17,15 @@ int main(int argc, char** argv) {
     Options opt(argc, argv);
 
     cout << opt.GetSelfName() << endl;
+    /*
     vector<string> hosts = opt.GetHosts();
     for (auto &h : hosts) {
         cout << h << endl;
     }
+     */
 
     RaftMetaServer server;
-    //server.run();
+    server.Run();
     cout << "Hello, World!" << endl;
     return 0;
 }
