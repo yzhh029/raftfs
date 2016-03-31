@@ -31,14 +31,7 @@ namespace raftfs {
             : raft_state(_raft_state) {
 
             // RaftRPCService
-            /*
-            rpc_server.reset(new TSimpleServer(
-                    boost::make_shared<RaftServiceProcessor>(boost::make_shared<RaftRPCService>()),
-                    boost::make_shared<TH::transport::TServerSocket>(_port),
-                    boost::make_shared<TH::transport::TBufferedTransportFactory>(),
-                    boost::make_shared<TH::protocol::TBinaryProtocolFactory>()
-            ));
-             */
+
             boost::shared_ptr<TMultiplexedProcessor> mux_processor(new TMultiplexedProcessor);
             boost::shared_ptr<TProcessor> raft_processor(
                     new RaftServiceProcessor(
