@@ -9,6 +9,7 @@
 
 // thrift headers
 #include <server/TThreadedServer.h>
+#include <server/TThreadPoolServer.h>
 #include <server/TSimpleServer.h>
 #include <memory>
 
@@ -31,11 +32,11 @@ namespace raftfs {
 
             void run();
 
-            ~MetaRPCServer();
+            ~MetaRPCServer() ;
         private:
             std::shared_ptr<RaftConsensus> raft_state;
-            std::unique_ptr<TH::server::TSimpleServer> rpc_server;
-
+            //std::unique_ptr<TH::server::TSimpleServer> rpc_server;
+            TH::server::TThreadPoolServer* rpc_server;
         };
 
     }

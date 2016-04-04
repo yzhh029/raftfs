@@ -85,12 +85,16 @@ namespace raftfs {
 
         void RaftConsensus::RemoteHostLoop(std::shared_ptr<RemoteHost> remote) {
 
+            string name = remote->GetName();
+            cout << "rpc thread to " << name << " started" << endl;
 
+            this_thread::sleep_for(chrono::seconds(2));
             while (!stop) {
-
+                //cout << "rpc "<< name << "go sleep" << endl;
+                //this_thread::yield();
                 this_thread::sleep_for(chrono::seconds(1));
                 //unique_lock<mutex> lock(m);
-
+                cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
                     case Role::kLeader:
                         break;
@@ -111,7 +115,7 @@ namespace raftfs {
                 //ock.unlock();
                 remote->GetRPCClient()->AppendEntries(resp, req);
 
-                cout << "append entries to " << remote->GetName() << " recv ae term" << resp.term << " success " << resp.success << endl;
+                cout << "append entries to " << name << " recv ae term" << resp.term << " success " << resp.success << endl;
 
                 //lock.lock();
                 //new_event.wait_for(lock, chrono::milliseconds(300));
