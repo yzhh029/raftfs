@@ -11,8 +11,10 @@ using namespace std;
 namespace raftfs {
     namespace server {
 
-        RaftMetaServer::RaftMetaServer() :
-            raft_state(new RaftConsensus()), rpc_server(12345, raft_state) {
+        RaftMetaServer::RaftMetaServer(Options &opt) :
+                raft_state(new RaftConsensus(opt)),
+                rpc_server(opt.GetPort(), raft_state)
+        {
             cout << "MetaServer init" << endl;
         }
 
@@ -20,6 +22,7 @@ namespace raftfs {
         void RaftMetaServer::Run() {
             cout << "FS server start" << endl;
             rpc_server.run();
+            //std::thread(&MetaRPCServer::run, this);
         }
 
 

@@ -56,7 +56,14 @@ namespace raftfs {
 
         void MetaRPCServer::run() {
             cout << "RPCserver start" << endl;
-            rpc_server->serve();
+            //rpc_server->serve();
+            thread rpc_th(&TServer::serve, rpc_server.get());
+            //std::thread(&rpc_server->serve(), )
+            cout << "RPCserver started" << endl;
+            //rpc_th.detach();
+            this_thread::sleep_for(chrono::seconds(1));
+            raft_state->StartRemoteLoops();
+            rpc_th.join();
         }
 
 
