@@ -33,10 +33,14 @@ namespace raftfs {
             }
             std::string GetName() const {return host;}
             std::shared_ptr<raftfs::protocol::RaftServiceClient> GetRPCClient() {
-                if (!sock->isOpen())
-                    sock->open();
                 return rpc_client;
             }
+
+            void TryConnect() {
+                sock->open();
+            }
+
+            bool Connected() {return sock->isOpen();}
         private:
             std::string host;
             boost::shared_ptr<apache::thrift::transport::TSocket> sock;

@@ -89,6 +89,9 @@ namespace raftfs {
             cout << "rpc thread to " << name << " started" << endl;
 
             this_thread::sleep_for(chrono::seconds(2));
+
+            auto rpc_client = remote->GetRPCClient();
+
             while (!stop) {
                 //cout << "rpc "<< name << "go sleep" << endl;
                 //this_thread::yield();
@@ -113,9 +116,26 @@ namespace raftfs {
                 req.leader_commit_index = 4234;
 
                 //ock.unlock();
-                remote->GetRPCClient()->AppendEntries(resp, req);
+                auto start = chrono::steady_clock::now();
+                try {
+                    if (remote->Connected())
+                        rpc_client->AppendEntries(resp, req);
+                    else {
+                        remote->TryConnect();
+                        if (remote->Connected())
+                            rpc_client->AppendEntries(resp, req);
+                    }
+                } catch (transport::TTransportException te) {
+                    //cout << te.what() << endl;
+                    cout << "lost communication to " << name << endl;
+                    continue;
+                }
 
-                cout << "append entries to " << name << " recv ae term" << resp.term << " success " << resp.success << endl;
+
+                auto end = chrono::steady_clock::now();
+
+                cout << "append entries to " << name << " recv ae term" << resp.term
+                    << " success " << resp.success << " in " << chrono::duration_cast<chrono::milliseconds>(end-start).count() << " ms" << endl;
 
                 //lock.lock();
                 //new_event.wait_for(lock, chrono::milliseconds(300));
