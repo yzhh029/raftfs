@@ -6,10 +6,12 @@
 #define RAFTFS_RAFTSERVER_H
 
 #include <memory>
-#include "MetaRPCServer.h"
+#include <server/TThreadPoolServer.h>
+
 #include "RaftConsensus.h"
 #include "../utils/Options.h"
 
+namespace THserver = apache::thrift::server;
 
 namespace raftfs {
 
@@ -18,12 +20,15 @@ namespace raftfs {
         class RaftMetaServer {
         public:
             RaftMetaServer(Options &opt) ;
+            ~RaftMetaServer();
             void Run();
 
         private:
+            void InitRPCServer(int _port, int workder);
+        private:
             std::shared_ptr<RaftConsensus> raft_state;
-            MetaRPCServer rpc_server;
-
+            //MetaRPCServer rpc_server;
+            THserver::TThreadPoolServer* rpc_server;
         };
     }
 }
