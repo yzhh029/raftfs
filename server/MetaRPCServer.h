@@ -20,10 +20,11 @@ namespace raftfs {
     namespace server {
 
         /*
-         * MetaRPCServer accepts RPC calls from both other metaserver and client
+         * MetaRPCServer accepts and issue RPC calls from both other metaserver and client
          * It register:
          *      RaftRPCService
          *      ClientRPCService
+         *
          */
 
         class MetaRPCServer {
@@ -31,11 +32,9 @@ namespace raftfs {
             MetaRPCServer(int _port, std::shared_ptr<RaftConsensus> _raft_state );
 
             void run();
-
             ~MetaRPCServer() ;
         private:
             std::shared_ptr<RaftConsensus> raft_state;
-            //std::unique_ptr<TH::server::TSimpleServer> rpc_server;
             TH::server::TThreadPoolServer* rpc_server;
         };
 
