@@ -40,7 +40,14 @@ namespace raftfs {
                 sock->open();
             }
 
-            bool Connected() {return sock->isOpen();}
+            bool Connected() {
+                if (sock->isOpen())
+                    return true;
+                else {
+                    sock->open();
+                    return sock->isOpen();
+                }
+            }
         private:
             std::string host;
             boost::shared_ptr<apache::thrift::transport::TSocket> sock;
@@ -61,7 +68,7 @@ namespace raftfs {
             int64_t GetTerm() const {return current_term;}
 
             void StartRemoteLoops();
-
+            void StartLeaderCheckLoop();
         private:
             void CheckLeaderLoop();
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);

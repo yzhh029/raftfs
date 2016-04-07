@@ -41,7 +41,8 @@ namespace raftfs {
               current_role(Role::kFollower),
               stop(false),
               self_id(opt.GetSelfId()),
-              self_name(opt.GetSelfName())
+              self_name(opt.GetSelfName()),
+              next_election(chrono::steady_clock::now() + chrono::seconds(1))
         {
             cout << " consensus init " << endl;
             cout << self_id << " " << self_name << endl;
@@ -58,6 +59,11 @@ namespace raftfs {
                 cout << "starting " << remote.first << " " << remote.second->GetName() << endl;
                 thread(&RaftConsensus::RemoteHostLoop, this, remotes[remote.first]).detach();
             }
+        }
+
+
+        void RaftConsensus::StartLeaderCheckLoop() {
+            thread(&RaftConsensus::CheckLeaderLoop, this).detach();
         }
 
 
@@ -120,11 +126,6 @@ namespace raftfs {
                 try {
                     if (remote->Connected())
                         rpc_client->AppendEntries(resp, req);
-                    else {
-                        remote->TryConnect();
-                        if (remote->Connected())
-                            rpc_client->AppendEntries(resp, req);
-                    }
                 } catch (transport::TTransportException te) {
                     //cout << te.what() << endl;
                     cout << "lost communication to " << name << endl;
