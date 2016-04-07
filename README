@@ -5,8 +5,15 @@
 #=====================================================================
 
 (a) Usage:
-    - Compile:
+    - Library requirement:
+      - Cmake 3.3 up
+      - Boost library 1.55
+      - C++ compiler supports C++11
+      - Apache Thrift 0.9.3
 
+    - Compile:
+      
+      
     - Execution:
 
 (b) File and directory list:

@@ -37,7 +37,7 @@ namespace raftfs {
             delete rpc_server;
         }
 
-
+        //-- Start Thrift thread pool server
         void RaftMetaServer::InitRPCServer(int _port, int worker) {
             boost::shared_ptr<TMultiplexedProcessor> mux_processor(new TMultiplexedProcessor);
             boost::shared_ptr<TProcessor> raft_processor(
@@ -47,7 +47,7 @@ namespace raftfs {
             );
             mux_processor->registerProcessor("Raft", raft_processor);
 
-            const int workerCount = 5;
+            const int workerCount = 5;  // server counts
 
             boost::shared_ptr<concurrency::ThreadManager> threadManager =
                     concurrency::ThreadManager::newSimpleThreadManager(workerCount);
