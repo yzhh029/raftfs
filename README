@@ -22,4 +22,4 @@
      - Raft.thrift       :  Raft definition file
      - *.cpp; *.h        :  Thrift generated files.
     ------------------------------------------------------------------
-    test/           :  
+    test/           :  Automated performance tests... 

@@ -1,5 +1,6 @@
 //
 // Created by yzhh on 3/31/16.
+// - Host must includes ourself.
 //
 
 #include "Options.h"
