@@ -72,6 +72,7 @@ namespace raftfs {
         private:
             void CheckLeaderLoop();
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
+            void StartLeaderElection();
 
         private:
             int64_t  self_id;
@@ -82,6 +83,7 @@ namespace raftfs {
 
             int64_t current_term;
             std::string vote_for;
+            int64_t leader_id;
             Role current_role;
             std::chrono::steady_clock::time_point next_election;
 

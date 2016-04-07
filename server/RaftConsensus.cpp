@@ -42,6 +42,7 @@ namespace raftfs {
               stop(false),
               self_id(opt.GetSelfId()),
               self_name(opt.GetSelfName()),
+              leader_id(-1),
               next_election(chrono::steady_clock::now() + chrono::seconds(1))
         {
             cout << " consensus init " << endl;
@@ -143,5 +144,10 @@ namespace raftfs {
             }
         }
 
+
+        void RaftConsensus::StartLeaderElection() {
+
+        }
+        
     }
 }

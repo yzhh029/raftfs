@@ -37,7 +37,6 @@ namespace raftfs {
             delete rpc_server;
         }
 
-
         void RaftMetaServer::InitRPCServer(int _port, int worker) {
             boost::shared_ptr<TMultiplexedProcessor> mux_processor(new TMultiplexedProcessor);
             boost::shared_ptr<TProcessor> raft_processor(
