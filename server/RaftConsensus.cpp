@@ -80,8 +80,10 @@ namespace raftfs {
             while (!stop) {
                 unique_lock<mutex> lock(m);
                 if (current_role != Role::kLeader &&
-                        chrono::steady_clock::now() > next_election) {
+                        chrono::steady_clock::now() >= next_election) {
                     cout << "leader timeout" << endl;
+                    StartLeaderElection();
+                    new_event.notify_all();
                 } else {
                     next_election += chrono::milliseconds(dis(gen));
                 }
@@ -111,6 +113,23 @@ namespace raftfs {
                     case Role::kFollower:
                         break;
                     case Role::kCandidate:
+                        // construct message
+                        protocol::ReqVoteRequest req;
+                        protocol::ReqVoteResponse resp;
+                        req.candidate_id = self_id;
+                        req.term = current_term;
+                        req.last_log_index = log.back().index;
+                        req.last_log_term = log.back().term;
+
+                        // do rpc call
+                        try {
+                            if (remote->Connected())
+                                rpc_client->RequestVote(resp, req);
+                        } catch (transport::TTransportException te) {
+
+                        }
+                        // update vote result
+
                         break;
                 }
                 protocol::AppendEntriesRequest req;
@@ -144,10 +163,31 @@ namespace raftfs {
             }
         }
 
-
         void RaftConsensus::StartLeaderElection() {
+            ++current_term;
+            current_role = Role::kCandidate;
+            leader_id = -1;
+            vote_pool.clear();
+            if (vote_for.find(current_term) == vote_for.end()) {
+                vote_for[current_term] = self_id;
+                vote_pool.insert(self_id);
+            }
+
 
         }
-        
+
+
+        void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
+                                            const protocol::AppendEntriesRequest &req) {
+            lock_guard<mutex> lock(m);
+
+
+        }
+
+        void RaftConsensus::OnRequestVote(protocol::ReqVoteResponse &resp, const protocol::ReqVoteRequest &req) {
+
+        }
+
+
     }
 }

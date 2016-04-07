@@ -14,7 +14,9 @@
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <unordered_map>
 #include <transport/TSocket.h>
+
 
 #include "../protocol/RaftService.h"
 #include "../utils/Options.h"
@@ -65,28 +67,35 @@ namespace raftfs {
             };
 
             RaftConsensus(Options opt);
-            int64_t GetTerm() const {return current_term;}
+            int64_t GetTerm() const { return current_term; }
 
             void StartRemoteLoops();
             void StartLeaderCheckLoop();
+
+            void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
+            void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
         private:
             void CheckLeaderLoop();
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
             void StartLeaderElection();
 
         private:
-            int64_t  self_id;
+            int32_t  self_id;
             std::string self_name;
-            std::map<int64_t, std::shared_ptr<RemoteHost>> remotes;
+            std::map<int32_t, std::shared_ptr<RemoteHost>> remotes;
 
             std::atomic_bool stop;
 
             int64_t current_term;
-            std::string vote_for;
-            int64_t leader_id;
+            // for each term, we store the leader id this node vote for
+            std::unordered_map<int64_t, int32_t> vote_for;
+            std::set<int32_t> vote_pool;
+            int32_t leader_id;
             Role current_role;
             std::chrono::steady_clock::time_point next_election;
 
+            // temporary in memory log
+            std::list<raftfs::protocol::Entry> log;
 
             std::mutex m;
             std::condition_variable new_event;

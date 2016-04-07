@@ -41,15 +41,13 @@ namespace raftfs {
             boost::shared_ptr<TMultiplexedProcessor> mux_processor(new TMultiplexedProcessor);
             boost::shared_ptr<TProcessor> raft_processor(
                     new RaftServiceProcessor(
-                            boost::shared_ptr<RaftRPCService>(new RaftRPCService())
+                            boost::shared_ptr<RaftRPCService>(new RaftRPCService(raft_state))
                     )
             );
             mux_processor->registerProcessor("Raft", raft_processor);
 
-            const int workerCount = 5;
-
             boost::shared_ptr<concurrency::ThreadManager> threadManager =
-                    concurrency::ThreadManager::newSimpleThreadManager(workerCount);
+                    concurrency::ThreadManager::newSimpleThreadManager(worker);
             threadManager->threadFactory(boost::make_shared<concurrency::PlatformThreadFactory>());
             threadManager->start();
 

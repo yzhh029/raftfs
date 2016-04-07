@@ -21,13 +21,14 @@ namespace raftfs {
         public:
             RaftMetaServer(Options &opt) ;
             ~RaftMetaServer();
+
+
             void Run();
 
         private:
             void InitRPCServer(int _port, int workder);
         private:
             std::shared_ptr<RaftConsensus> raft_state;
-            //MetaRPCServer rpc_server;
             THserver::TThreadPoolServer* rpc_server;
         };
     }

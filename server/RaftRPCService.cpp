@@ -18,7 +18,7 @@ namespace raftfs {
             cout << "term " << vote.term << " candidate id" << vote.candidate_id << endl;
             cout << "last term " << vote.last_log_term << "last index " << vote.last_log_index << endl;
 
-            _return = protocol::ReqVoteResponse();
+            raft_state->OnRequestVote(_return, vote);
             _return.term = vote.term + 1;
             _return.vote_granted = true;
         }
@@ -28,7 +28,6 @@ namespace raftfs {
                                            const protocol::AppendEntriesRequest &append) {
             cout << " recv ae request" << endl;
             cout << " term " << append.term << " leader_id" << append.leader_id << endl;
-            _return = protocol::AppendEntriesResponse();
             _return.term = append.term + 1;
             _return.success = true;
         }
