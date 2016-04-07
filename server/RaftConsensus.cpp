@@ -52,6 +52,12 @@ namespace raftfs {
                 cout << h.first << " " << h.second << endl;
                 remotes[h.first] = std::make_shared<RemoteHost>(h.second, opt.GetPort());
             }
+
+            // add an emtry log entry
+            protocol::Entry entry;
+            entry.index = 0;
+            entry.term = current_term;
+            log.push_back(entry);
         }
 
 
@@ -105,7 +111,7 @@ namespace raftfs {
                 //cout << "rpc "<< name << "go sleep" << endl;
                 //this_thread::yield();
                 this_thread::sleep_for(chrono::seconds(1));
-                //unique_lock<mutex> lock(m);
+                unique_lock<mutex> lock(m);
                 cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
                     case Role::kLeader:
@@ -122,6 +128,7 @@ namespace raftfs {
                         req.last_log_term = log.back().term;
 
                         // do rpc call
+                        lock.unlock();
                         try {
                             if (remote->Connected())
                                 rpc_client->RequestVote(resp, req);
@@ -129,7 +136,9 @@ namespace raftfs {
 
                         }
                         // update vote result
+                        lock.lock();
 
+                        
                         break;
                 }
                 protocol::AppendEntriesRequest req;
