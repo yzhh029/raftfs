@@ -1,0 +1,25 @@
+#=====================================================================                                                         
+#  README - CS505 Spring 2016 - Final Project
+#  Zhihao Yao, yao86.purdue.edu
+#  Cheng Huang, 0027369626, huang630@purdue.edu
+#=====================================================================
+
+(a) Usage:
+    - Compile:
+
+    - Execution:
+
+(b) File and directory list:
+    ------------------------------------------------------------------
+    utils/          :  Utility functions
+     - option.*     :  Handle command line options.
+    ------------------------------------------------------------------
+    server/         :  Raft servers
+     - server_main.cpp   :  **Program main entry**
+    ------------------------------------------------------------------
+    protocol/       :  Thrift's protocol def and generated files
+     - compileThrift.sh  :  Generate thrift lib with def file
+     - Raft.thrift       :  Raft definition file
+     - *.cpp; *.h        :  Thrift generated files.
+    ------------------------------------------------------------------
+    test/           :  
