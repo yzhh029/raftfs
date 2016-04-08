@@ -36,7 +36,7 @@ namespace raftfs {
     }
 
 
-    map<int64_t, string> Options::GetHosts() {
+    map<int32_t, string> Options::GetHosts() {
         ifstream infile(host_file);
 
         int id = 1;

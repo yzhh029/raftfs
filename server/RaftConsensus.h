@@ -28,12 +28,13 @@ namespace raftfs {
         class RemoteHost {
 
         public:
-            RemoteHost(std::string host_name, int port);
+            RemoteHost(int32_t id, std::string host_name, int port);
             ~RemoteHost() {
                 if (sock->isOpen())
                     sock->close();
             }
             std::string GetName() const {return host;}
+            int32_t GetID() const {return id;}
             std::shared_ptr<raftfs::protocol::RaftServiceClient> GetRPCClient() {
                 return rpc_client;
             }
@@ -51,6 +52,7 @@ namespace raftfs {
                 }
             }
         private:
+            int32_t id;
             std::string host;
             boost::shared_ptr<apache::thrift::transport::TSocket> sock;
             std::shared_ptr<raftfs::protocol::RaftServiceClient> rpc_client;
@@ -75,9 +77,14 @@ namespace raftfs {
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
         private:
+
+            int64_t GetLastLogTerm() const {return log.back().term;}
+            int64_t GetLastLogIndex() const {return log.back().index;}
+
             void CheckLeaderLoop();
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
             void StartLeaderElection();
+            void ChangeToLeader();
 
         private:
             int32_t  self_id;
@@ -87,9 +94,11 @@ namespace raftfs {
             std::atomic_bool stop;
 
             int64_t current_term;
-            // for each term, we store the leader id this node vote for
+            // for each term, we store the host id this node vote for
+            //                 term     vote id
             std::unordered_map<int64_t, int32_t> vote_for;
             std::set<int32_t> vote_pool;
+            int32_t quorum_size;
             int32_t leader_id;
             Role current_role;
             std::chrono::steady_clock::time_point next_election;

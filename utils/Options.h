@@ -13,16 +13,16 @@ namespace raftfs {
     class Options {
     public:
         Options(int argc, char* argv[]);
-        std::map<int64_t, std::string> GetHosts() ;
+        std::map<int32_t, std::string> GetHosts() ;
         std::string GetSelfName();
-        int64_t GetSelfId() {return self_id; }
+        int32_t GetSelfId() {return self_id; }
         int GetPort() {return port;}
 
     private:
         std::string host_file;
         std::string self_name;
-        int64_t self_id;
-        std::map<int64_t, std::string> hosts;
+        int32_t self_id;
+        std::map<int32_t, std::string> hosts;
         int port;
     };
 

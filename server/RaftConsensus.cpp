@@ -20,8 +20,8 @@ using namespace apache::thrift::transport;
 namespace raftfs {
     namespace server {
 
-        RemoteHost::RemoteHost(std::string host_name, int port) :
-            host(host_name)
+        RemoteHost::RemoteHost(int32_t _id, std::string host_name, int port) :
+            host(host_name), id(_id)
         {
 
             sock.reset(new TSocket(host, port));
@@ -50,8 +50,10 @@ namespace raftfs {
 
             for (auto &h: opt.GetHosts()) {
                 cout << h.first << " " << h.second << endl;
-                remotes[h.first] = std::make_shared<RemoteHost>(h.second, opt.GetPort());
+                remotes[h.first] = std::make_shared<RemoteHost>(h.first, h.second, opt.GetPort());
             }
+
+            quorum_size = (remotes.size() + 1) / 2 + 1;
 
             // add an emtry log entry
             protocol::Entry entry;
@@ -103,29 +105,51 @@ namespace raftfs {
             string name = remote->GetName();
             cout << "rpc thread to " << name << " started" << endl;
 
-            this_thread::sleep_for(chrono::seconds(2));
+            this_thread::sleep_for(chrono::seconds(1));
 
             auto rpc_client = remote->GetRPCClient();
 
             while (!stop) {
-                //cout << "rpc "<< name << "go sleep" << endl;
-                //this_thread::yield();
-                this_thread::sleep_for(chrono::seconds(1));
+
                 unique_lock<mutex> lock(m);
+                new_event.wait_for(lock, chrono::seconds(1));
                 cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
-                    case Role::kLeader:
+                    case Role::kLeader: {
+                        protocol::AppendEntriesRequest ae_req;
+                        protocol::AppendEntriesResponse ae_resp;
+
+                        ae_req.term = 123;
+                        ae_req.leader_id = 345;
+                        ae_req.prev_log_index = 111;
+                        ae_req.prev_log_term = 132849;
+                        ae_req.leader_commit_index = 4234;
+                        try {
+                            if (remote->Connected())
+                                rpc_client->AppendEntries(ae_resp, ae_req);
+                        } catch (transport::TTransportException te) {
+                            //cout << te.what() << endl;
+                            cout << "lost communication to " << name << endl;
+                            continue;
+                        }
+                        cout << "append entries to " << name << " recv ae term" << ae_resp.term
+                        << " success " << ae_resp.success << endl;
+
                         break;
-                    case Role::kFollower:
+                    }
+                    case Role::kFollower: {
+
+
                         break;
-                    case Role::kCandidate:
+                    }
+                    case Role::kCandidate: {
                         // construct message
                         protocol::ReqVoteRequest req;
                         protocol::ReqVoteResponse resp;
                         req.candidate_id = self_id;
                         req.term = current_term;
-                        req.last_log_index = log.back().index;
-                        req.last_log_term = log.back().term;
+                        req.last_log_index = GetLastLogIndex();
+                        req.last_log_term = GetLastLogTerm();
 
                         // do rpc call
                         lock.unlock();
@@ -133,14 +157,23 @@ namespace raftfs {
                             if (remote->Connected())
                                 rpc_client->RequestVote(resp, req);
                         } catch (transport::TTransportException te) {
-
+                            continue;
                         }
                         // update vote result
                         lock.lock();
-
-                        
+                        if (resp.vote_granted && resp.term == current_term) {
+                            vote_pool.insert(remote->GetID());
+                            // have enough votes
+                            if (current_role == Role::kCandidate && vote_pool.size() >= quorum_size) {
+                                //  change to leader
+                                ChangeToLeader();
+                            }
+                        }
                         break;
+                    }
                 }
+
+                /*
                 protocol::AppendEntriesRequest req;
                 protocol::AppendEntriesResponse resp;
 
@@ -166,7 +199,7 @@ namespace raftfs {
 
                 cout << "append entries to " << name << " recv ae term" << resp.term
                     << " success " << resp.success << " in " << chrono::duration_cast<chrono::milliseconds>(end-start).count() << " ms" << endl;
-
+                */
                 //lock.lock();
                 //new_event.wait_for(lock, chrono::milliseconds(300));
             }
@@ -181,8 +214,12 @@ namespace raftfs {
                 vote_for[current_term] = self_id;
                 vote_pool.insert(self_id);
             }
+        }
 
 
+        void RaftConsensus::ChangeToLeader() {
+            current_role = Role::kLeader;
+            leader_id = self_id;
         }
 
 
@@ -190,11 +227,28 @@ namespace raftfs {
                                             const protocol::AppendEntriesRequest &req) {
             lock_guard<mutex> lock(m);
 
-
         }
 
         void RaftConsensus::OnRequestVote(protocol::ReqVoteResponse &resp, const protocol::ReqVoteRequest &req) {
+            lock_guard<mutex> lock(m);
 
+            int64_t lastlogterm = GetLastLogTerm();
+            int64_t lastlogindex = GetLastLogIndex();
+            bool grant = false;
+            // make sure candidate's log is up to date
+            if (lastlogindex <= req.last_log_index
+                    && lastlogterm <= req.last_log_term) {
+                auto vote = vote_for.find(req.term);
+
+                if (vote == vote_for.end() || (vote != vote_for.end() && vote->second == req.candidate_id)) {
+                    cout << "grant vote to " << req.candidate_id << " term:" << req.term << endl;
+                    grant = true;
+                    vote_for[req.term] = req.candidate_id;
+                }
+            }
+
+            resp.term = current_term;
+            resp.vote_granted = grant;
         }
 
 
