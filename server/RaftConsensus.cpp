@@ -87,10 +87,12 @@ namespace raftfs {
                         Now() >= next_election) {
                     cout << "leader timeout" << endl;
                     StartLeaderElection();
+                    PostponeElection();
                     new_event.notify_all();
                 } else {
                     PostponeElection();
                 }
+
                 new_event.wait_until(lock, next_election);
             }
         }
@@ -168,36 +170,6 @@ namespace raftfs {
                         break;
                     }
                 }
-
-                /*
-                protocol::AppendEntriesRequest req;
-                protocol::AppendEntriesResponse resp;
-
-                req.term = 123;
-                req.leader_id = 345;
-                req.prev_log_index = 111;
-                req.prev_log_term = 132849;
-                req.leader_commit_index = 4234;
-
-                //ock.unlock();
-                auto start = chrono::steady_clock::now();
-                try {
-                    if (remote->Connected())
-                        rpc_client->AppendEntries(resp, req);
-                } catch (transport::TTransportException te) {
-                    //cout << te.what() << endl;
-                    cout << "lost communication to " << name << endl;
-                    continue;
-                }
-
-
-                auto end = chrono::steady_clock::now();
-
-                cout << "append entries to " << name << " recv ae term" << resp.term
-                    << " success " << resp.success << " in " << chrono::duration_cast<chrono::milliseconds>(end-start).count() << " ms" << endl;
-                */
-                //lock.lock();
-                //new_event.wait_for(lock, chrono::milliseconds(300));
             }
         }
 

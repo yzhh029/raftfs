@@ -73,15 +73,22 @@ namespace raftfs {
 
             void StartRemoteLoops();
             void StartLeaderCheckLoop();
-
+            
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
         private:
 
             int64_t GetLastLogTerm() const {return log.back().term;}
             int64_t GetLastLogIndex() const {return log.back().index;}
-
+            /*
+             * Perodically check whether the leader node is timeout.
+             * Should run in a thread
+             */
             void CheckLeaderLoop();
+            /*
+             * Run this function in a thread for every remote node
+             * perform operations based on current role
+             */
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
             void StartLeaderElection();
             void ChangeToLeader();
@@ -90,26 +97,43 @@ namespace raftfs {
         private:
             int32_t  self_id;
             std::string self_name;
+            // a mapping from node id to its instance
+            // may wrape it in a sperate class later
             std::map<int32_t, std::shared_ptr<RemoteHost>> remotes;
 
             std::atomic_bool stop;
 
             int64_t current_term;
+
             // for each term, we store the host id this node vote for
             //                 term     vote id
             std::unordered_map<int64_t, int32_t> vote_for;
+
+            /*
+             * for each election round, vote_pool stores the remote node id who grant their votes
+             * need to be cleared at the beginning of election
+             */
             std::set<int32_t> vote_pool;
+            /*
+             * The minimum number of responses for any valid operation
+             * total number of nodes in the cluster X = 2*N + 1
+             * where N is quorum size
+             */
             int32_t quorum_size;
             int32_t leader_id;
             Role current_role;
+            /*
+             * time point to start a new election
+             *
+             */
             std::chrono::steady_clock::time_point next_election;
 
             // temporary in memory log
+            // TODO implement a log class
             std::list<raftfs::protocol::Entry> log;
 
             std::mutex m;
             std::condition_variable new_event;
-            //std::vector<std::thread> peer_threads;
         };
     }
 }
