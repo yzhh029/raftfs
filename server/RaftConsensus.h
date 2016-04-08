@@ -39,10 +39,6 @@ namespace raftfs {
                 return rpc_client;
             }
 
-            void TryConnect() {
-                sock->open();
-            }
-
             bool Connected() {
                 if (sock->isOpen())
                     return true;
@@ -73,7 +69,7 @@ namespace raftfs {
 
             void StartRemoteLoops();
             void StartLeaderCheckLoop();
-            
+
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
         private:
@@ -120,7 +116,14 @@ namespace raftfs {
              * where N is quorum size
              */
             int32_t quorum_size;
+            /*
+             * the leader id of current term
+             */
             int32_t leader_id;
+            /*
+             * current role of this node
+             * possible value is kFollower, kCandidate, kLeader
+             */
             Role current_role;
             /*
              * time point to start a new election
