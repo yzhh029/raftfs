@@ -3,6 +3,7 @@
 //
 
 #include "RaftConsensus.h"
+#include "../utils/time_utils.h"
 #include "../protocol/RaftService.h"
 #include <iostream>
 #include <random>
@@ -43,7 +44,7 @@ namespace raftfs {
               self_id(opt.GetSelfId()),
               self_name(opt.GetSelfName()),
               leader_id(-1),
-              next_election(chrono::steady_clock::now() + chrono::seconds(1))
+              next_election(Now() + chrono::seconds(1))
         {
             cout << " consensus init " << endl;
             cout << self_id << " " << self_name << endl;
@@ -77,23 +78,18 @@ namespace raftfs {
 
 
         void RaftConsensus::CheckLeaderLoop() {
-            random_device rd;
-            mt19937 gen(rd());
 
-            int upper_bound = 300;
-            int lower_bound = 150;
-
-            uniform_int_distribution<> dis(lower_bound, upper_bound);
+            this_thread::sleep_for(chrono::seconds(1));
 
             while (!stop) {
                 unique_lock<mutex> lock(m);
                 if (current_role != Role::kLeader &&
-                        chrono::steady_clock::now() >= next_election) {
+                        Now() >= next_election) {
                     cout << "leader timeout" << endl;
                     StartLeaderElection();
                     new_event.notify_all();
                 } else {
-                    next_election += chrono::milliseconds(dis(gen));
+                    PostponeElection();
                 }
                 new_event.wait_until(lock, next_election);
             }
@@ -214,6 +210,22 @@ namespace raftfs {
                 vote_for[current_term] = self_id;
                 vote_pool.insert(self_id);
             }
+
+            cout << "new election T:" << current_term << endl;
+        }
+
+
+        void RaftConsensus::PostponeElection() {
+            static random_device rd;
+            static mt19937 gen(rd());
+
+            static int upper_bound = 300;
+            static int lower_bound = 150;
+
+            static uniform_int_distribution<> dis(lower_bound, upper_bound);
+
+            //next_election = Now() + chrono::milliseconds(dis(gen));
+            next_election = Now() + chrono::seconds(2);
         }
 
 
@@ -226,6 +238,22 @@ namespace raftfs {
         void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
                                             const protocol::AppendEntriesRequest &req) {
             lock_guard<mutex> lock(m);
+            bool success = true;
+
+            if (current_role == Role::kCandidate && req.term >= current_term) {
+                // have a new leader
+                leader_id = req.leader_id;
+                current_role = Role::kFollower;
+                PostponeElection();
+            } else if (current_term > req.term) {
+                // reject rpc
+                success = false;
+            }
+
+            resp.term = current_term;
+            resp.success = success;
+
+            // TODO log operations
 
         }
 

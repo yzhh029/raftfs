@@ -19,8 +19,8 @@ namespace raftfs {
             cout << "last term " << vote.last_log_term << "last index " << vote.last_log_index << endl;
 
             raft_state->OnRequestVote(_return, vote);
-            _return.term = vote.term + 1;
-            _return.vote_granted = true;
+            //_return.term = vote.term + 1;
+            //_return.vote_granted = true;
         }
 
 
@@ -28,8 +28,9 @@ namespace raftfs {
                                            const protocol::AppendEntriesRequest &append) {
             cout << " recv ae request" << endl;
             cout << " term " << append.term << " leader_id" << append.leader_id << endl;
-            _return.term = append.term + 1;
-            _return.success = true;
+            raft_state->OnAppendEntries(_return, append);
+            //_return.term = append.term + 1;
+            //_return.success = true;
         }
 
 

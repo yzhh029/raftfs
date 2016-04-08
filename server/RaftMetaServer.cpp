@@ -66,8 +66,9 @@ namespace raftfs {
 
             //thread rpc_thread([this](){this->rpc_server->serve();});
             raft_state->StartRemoteLoops();
-            //raft_state->StartLeaderCheckLoop();
+            raft_state->StartLeaderCheckLoop();
             rpc_server->serve();
+            //rpc_thread.join();
         }
 
 

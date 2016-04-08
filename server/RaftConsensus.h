@@ -17,9 +17,9 @@
 #include <unordered_map>
 #include <transport/TSocket.h>
 
-
 #include "../protocol/RaftService.h"
 #include "../utils/Options.h"
+#include "../utils/time_utils.h"
 
 
 namespace raftfs {
@@ -85,6 +85,7 @@ namespace raftfs {
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
             void StartLeaderElection();
             void ChangeToLeader();
+            void PostponeElection();
 
         private:
             int32_t  self_id;
