@@ -23,6 +23,7 @@
     ------------------------------------------------------------------
     server/         :  Raft servers
      - server_main.cpp   :  **Program main entry**
+     - RaftConsensus.*   :  Functions to perform Raft Consensus
     ------------------------------------------------------------------
     protocol/       :  Thrift's protocol def and generated files
      - compileThrift.sh  :  Generate thrift lib with def file

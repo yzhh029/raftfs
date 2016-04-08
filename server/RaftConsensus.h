@@ -25,7 +25,7 @@
 namespace raftfs {
     namespace server {
 
-        class RemoteHost {
+        class RemoteHost {  // Remote Host sock & rpc_client
 
         public:
             RemoteHost(int32_t id, std::string host_name, int port);

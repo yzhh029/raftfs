@@ -79,7 +79,7 @@ namespace raftfs {
 
         void RaftConsensus::CheckLeaderLoop() {
 
-            this_thread::sleep_for(chrono::seconds(1));
+            this_thread::sleep_for(chrono::seconds(1)); // currently 1sec.
 
             while (!stop) {
                 unique_lock<mutex> lock(m);
@@ -186,7 +186,7 @@ namespace raftfs {
             cout << "new election T:" << current_term << endl;
         }
 
-
+        // Set next leader election timer.
         void RaftConsensus::PostponeElection() {
             static random_device rd;
             static mt19937 gen(rd());
@@ -200,13 +200,13 @@ namespace raftfs {
             next_election = Now() + chrono::seconds(2);
         }
 
-
+        // Change our role to leader and update leader ID.
         void RaftConsensus::ChangeToLeader() {
             current_role = Role::kLeader;
             leader_id = self_id;
         }
 
-
+        // Handle RPC: AppendEntries()
         void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
                                             const protocol::AppendEntriesRequest &req) {
             lock_guard<mutex> lock(m);
@@ -229,6 +229,7 @@ namespace raftfs {
 
         }
 
+        // Handle RPC: OnRequestVote
         void RaftConsensus::OnRequestVote(protocol::ReqVoteResponse &resp, const protocol::ReqVoteRequest &req) {
             lock_guard<mutex> lock(m);
 
