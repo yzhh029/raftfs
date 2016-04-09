@@ -218,6 +218,16 @@ namespace raftfs {
             leader_id = self_id;
         }
 
+
+        void RaftConsensus::ChangeToFollower(int64_t new_term) {
+            if (current_role == Role::kCandidate) {
+                vote_pool.clear();
+            }
+            current_role = Role::kFollower;
+            current_term = new_term;
+        }
+
+
         // Handle RPC: AppendEntries()
         void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
                                             const protocol::AppendEntriesRequest &req) {
@@ -226,10 +236,8 @@ namespace raftfs {
 
             if (req.term > current_term) {
                 resp.term = current_term;
-                current_term = req.term;
                 leader_id = req.leader_id;
-                current_role = Role::kFollower;
-                vote_pool.clear();
+                ChangeToFollower(req.term);
                 cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
 
             } else if (current_role == Role::kCandidate && req.term == current_term) {
