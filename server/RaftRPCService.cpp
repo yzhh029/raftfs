@@ -13,7 +13,7 @@ namespace raftfs {
 
 
         void RaftRPCService::RequestVote(protocol::ReqVoteResponse &_return, const protocol::ReqVoteRequest &vote) {
-            cout << "recv vote request" << endl;
+            //cout << "recv vote request" << endl;
 
             //cout << "term " << vote.term << " candidate id" << vote.candidate_id << endl;
             //cout << "last term " << vote.last_log_term << "last index " << vote.last_log_index << endl;
