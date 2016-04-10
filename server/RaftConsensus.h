@@ -88,6 +88,7 @@ namespace raftfs {
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
             void StartLeaderElection();
             void ChangeToLeader();
+            void ChangeToFollower(int64_t new_term);
             void PostponeElection();
 
         private:
