@@ -61,6 +61,7 @@ namespace raftfs {
             entry.index = 0;
             entry.term = current_term;
             log.push_back(entry);
+            PostponeElection();
         }
 
 
@@ -105,11 +106,10 @@ namespace raftfs {
             //this_thread::sleep_for(chrono::seconds(1));
 
             auto rpc_client = remote->GetRPCClient();
+            unique_lock<mutex> lock(m);
 
             while (!stop) {
 
-                unique_lock<mutex> lock(m);
-                new_event.wait_for(lock, chrono::seconds(1));
                 //cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
                     case Role::kLeader: {
@@ -130,7 +130,8 @@ namespace raftfs {
                         } catch (transport::TTransportException te) {
                             //cout << te.what() << endl;
                             cout << "lost communication to " << name << endl;
-                            continue;
+                            lock.lock();
+                            break;
                         }
                         lock.lock();
                         cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
@@ -160,17 +161,21 @@ namespace raftfs {
                             if (remote->Connected())
                                 rpc_client->RequestVote(resp, req);
                         } catch (transport::TTransportException te) {
-                            continue;
+                            lock.lock();
+                            break;
                         }
                         // update vote result
                         lock.lock();
-                        cout << TimePointStr(Now()) << " granted? " << resp.vote_granted << " from " << id
-                             << " LT" << current_term << " RT" << resp.term << endl;
+                        if (current_role == Role::kCandidate)
+                            cout << TimePointStr(Now()) << " granted? " << resp.vote_granted << " from " << id
+                                << " LT" << current_term << " RT" << resp.term << endl;
+                        else
+                            continue;
                         if (current_role == Role::kCandidate && resp.vote_granted && resp.term <= current_term) {
                             vote_pool.insert(remote->GetID());
                             cout << TimePointStr(Now()) << " updated pool size:" << vote_pool.size() << endl;
                             // have enough votes
-                            if (current_role == Role::kCandidate && vote_pool.size() >= quorum_size) {
+                            if ( vote_pool.size() >= quorum_size) {
                                 //  change to leader
                                 cout << TimePointStr(Now()) << " win leader election LT:" << current_term << endl;
                                 ChangeToLeader();
@@ -179,6 +184,8 @@ namespace raftfs {
                         break;
                     }
                 }
+                new_event.wait_for(lock, chrono::milliseconds(250));
+
             }
         }
 
@@ -200,19 +207,22 @@ namespace raftfs {
             static random_device rd;
             static mt19937 gen(rd());
 
-            static int upper_bound = 3000;
-            static int lower_bound = 1500;
+            static int upper_bound = 1000;
+            static int lower_bound = 500;
 
             static uniform_int_distribution<> dis(lower_bound, upper_bound);
 
             next_election = Now() + chrono::milliseconds(dis(gen));
             //next_election = Now() + chrono::seconds(2);
+            cout << "pp " << TimePointStr(next_election) << endl;
+            //new_event.notify_all();
         }
 
         // Change our role to leader and update leader ID.
         void RaftConsensus::ChangeToLeader() {
             current_role = Role::kLeader;
             leader_id = self_id;
+            new_event.notify_all();
         }
 
 
@@ -223,6 +233,7 @@ namespace raftfs {
             current_role = Role::kFollower;
             current_term = new_term;
             leader_id = -1;
+            //new_event.notify_all();
         }
 
 
@@ -235,23 +246,29 @@ namespace raftfs {
             // if sender has higher term, receiver catch up his term and change to follower
             if (req.term > current_term) {
                 resp.term = current_term;
-                ChangeToFollower(req.term);
-                leader_id = req.leader_id;
-                cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
+                PostponeElection();
 
-            } else if (current_role == Role::kCandidate && req.term == current_term) {
-                // have a new leader
                 ChangeToFollower(req.term);
                 leader_id = req.leader_id;
                 cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
                 //PostponeElection();
+            } else if (current_role == Role::kCandidate && req.term == current_term) {
+                // have a new leader
+                PostponeElection();
+
+                ChangeToFollower(req.term);
+                leader_id = req.leader_id;
+                cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
                 resp.term = current_term;
             } else if (current_term > req.term) {
                 // reject rpc
                 resp.term = current_term;
                 success = false;
+            } else {
+                // normal rpc from leader
+                PostponeElection();
             }
-            PostponeElection();
+
 
             //resp.term = current_term;
             resp.success = success;
@@ -270,7 +287,7 @@ namespace raftfs {
 
             if (req.term > current_term) {
                 ChangeToFollower(req.term);
-                cout << TimePointStr(Now()) <<"OnRV new RT:" << req.term << " change to follower" << endl;
+                cout << TimePointStr(Now()) <<" OnRV new RT:" << req.term << " change to follower" << endl;
             }
 
             // make sure candidate's log is up to date
@@ -279,13 +296,13 @@ namespace raftfs {
                 auto vote = vote_for.find(req.term);
 
                 if (vote == vote_for.end() || (vote != vote_for.end() && vote->second == req.candidate_id)) {
-                    cout << "grant vote to " << req.candidate_id << " term:" << req.term << endl;
+                    cout << TimePointStr(Now()) << " OnRV grant vote to " << req.candidate_id << " term:" << req.term << endl;
                     grant = true;
                     vote_for[req.term] = req.candidate_id;
                 }
             }
             if (!grant) {
-                cout << "reject vote to" << req.candidate_id << " term:" << req.term << endl;
+                cout << TimePointStr(Now()) << " OnRV reject vote to" << req.candidate_id << " term:" << req.term << endl;
             }
 
             resp.term = current_term;
