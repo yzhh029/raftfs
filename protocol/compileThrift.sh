@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 thrift -gen cpp -out . Raft.thrift
-rm RaftService_server.skeleton.cpp
+thrift -gen cpp -out . Client.thrift
+rm *.skeleton.cpp

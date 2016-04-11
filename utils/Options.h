@@ -13,7 +13,10 @@ namespace raftfs {
     class Options {
     public:
         Options(int argc, char* argv[]);
+        // called by servers
         std::map<int32_t, std::string> GetHosts() ;
+        // called by client
+        std::vector<std::string> GetAllHosts();
         std::string GetSelfName();
         int32_t GetSelfId() {return self_id; }
         int GetPort() {return port;}
@@ -23,6 +26,7 @@ namespace raftfs {
         std::string self_name;
         int32_t self_id;
         std::map<int32_t, std::string> hosts;
+        std::vector<std::string> all_hosts;
         int port;
     };
 

@@ -72,6 +72,8 @@ namespace raftfs {
 
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
+
+            int32_t GetLeader() const {return leader_id;}
         private:
 
             int64_t GetLastLogTerm() const {return log.back().term;}

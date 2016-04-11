@@ -61,4 +61,20 @@ namespace raftfs {
     }
 
 
+    std::vector<std::string> Options::GetAllHosts() {
+
+        if (!all_hosts.empty())
+            return all_hosts;
+
+        ifstream infile(host_file);
+        string h;
+
+        while (infile >> h) {
+            all_hosts.push_back(h);
+        }
+
+        return all_hosts;
+    }
+
+
 }

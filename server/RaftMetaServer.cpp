@@ -4,6 +4,7 @@
 
 #include "RaftMetaServer.h"
 #include "RaftRPCService.h"
+#include "ClientRPCService.h"
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
@@ -45,6 +46,13 @@ namespace raftfs {
                     )
             );
             mux_processor->registerProcessor("Raft", raft_processor);
+
+            boost::shared_ptr<TProcessor> client_processor(
+                    new ClientServiceProcessor(
+                            boost::shared_ptr<ClientRPCService>(new ClientRPCService(raft_state))
+                    )
+            );
+            mux_processor->registerProcessor("FSClient", client_processor);
 
             boost::shared_ptr<concurrency::ThreadManager> threadManager =
                     concurrency::ThreadManager::newSimpleThreadManager(worker);
