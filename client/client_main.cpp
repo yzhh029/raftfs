@@ -12,7 +12,7 @@ using namespace raftfs;
 int main(int argc, char** argv) {
 
     Options opt(argc, argv);
-    //FSClient client(opt);
+    FSClient client(opt);
 
     client.CheckLeaders();
     cout << "hello world" << endl;
