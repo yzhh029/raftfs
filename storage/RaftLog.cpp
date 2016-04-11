@@ -12,35 +12,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "build/Protocol/Client.pb.h"
-#include "build/Protocol/Raft.pb.h"
-#include "Core/Debug.h"
-#include "Core/ProtoBuf.h"
+//#include "Core/Debug.h"
+//#include "Core/ProtoBuf.h"
 #include "RaftLog.h"
 
-namespace LogCabin {
-namespace Storage {
+namespace raftfs {
+	namespace server {	// FIXME: put this under server first
 
-////////// Log::Sync //////////
-
-Log::Sync::Sync(uint64_t lastIndex)
+RaftLog::FlushStorage::FlushStorage(uint64_t lastIndex)
     : lastIndex(lastIndex)
     , completed(false) {
 }
 
-Log::Sync::~Sync()
-{
+RaftLog::FlushStorage::~FlushStorage(){
     assert(completed);
 }
 
 ////////// Log //////////
 
-Log::Log()
-    : metadata()
+RaftLog::RaftLog()
+    //: metadata()
 {
 }
 
-Log::~Log()
+RaftLog::~RaftLog()
 {
 }
 

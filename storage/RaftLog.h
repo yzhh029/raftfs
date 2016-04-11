@@ -12,11 +12,13 @@
 #include "../protocol/Raft_types.h"
 #include "RaftConsensus.h"
 #include "../protocol/RaftService.h"
-#include <memory>
+//#include <memory>
+#include <vector>
 
 namespace raftfs {
     namespace  server {		// FIXME: Temporary put this under server...
         class RaftLog {
+
         public:
             RaftLog();
 
@@ -53,8 +55,8 @@ namespace raftfs {
           virtual ~RaftLog();
 
           /**
-           * Start to append new entries to the log. The entries may not be on disk
-           * yet when this returns; see Sync.
+           * Start to append new entries to the log.
+           * The entries will be in memory untio flush
            * \param entries
            *      Entries to place at the end of the log.
            * \return
@@ -65,12 +67,6 @@ namespace raftfs {
 
           /**
            * Look up an entry by its log index.
-           * \param index
-           *      Must be in the range [getLogStartIndex(), getLastLogIndex()].
-           *      Otherwise, this will crash the server.
-           * \return
-           *      The entry corresponding to that index. This reference is only
-           *      guaranteed to be valid until the next time the log is modified.
            */
           virtual const Entry& getEntry(uint64_t index) const = 0;
 
@@ -106,7 +102,7 @@ namespace raftfs {
            * Release resources attached to the Sync object.
            * Call this after waiting on the Sync object.
            */
-          void syncComplete(std::unique_ptr<Sync> sync) {
+          void syncComplete(std::unique_ptr<FlushStorage> sync) {
               sync->completed = true;
               syncCompleteVirtual(std::move(sync));
           }
@@ -114,7 +110,7 @@ namespace raftfs {
           /**
            * See syncComplete(). Intended for subclasses to override.
            */
-          virtual void syncCompleteVirtual(std::unique_ptr<Sync> sync) {}
+          virtual void syncCompleteVirtual(std::unique_ptr<FlushStorage> sync) {}
         public:
 
           /**
@@ -125,7 +121,7 @@ namespace raftfs {
            * other Log operations, Sync::wait() may be done concurrently with all
            * operations except truncateSuffix().
            */
-          virtual std::unique_ptr<Sync> takeSync() = 0;
+          virtual std::unique_ptr<FlushStorage> takeSync() = 0;
 
           /**
            * Delete the log entries before the given index.
@@ -156,18 +152,18 @@ namespace raftfs {
           /**
            * Call this after changing #metadata.
            */
-          virtual void updateMetadata() = 0;
+          //virtual void updateMetadata() = 0;
 
           /**
            * Add information about the log's state to the given structure.
            * Used for diagnostics.
            */
-          virtual void updateServerStats(Protocol::ServerStats& serverStats) const {}
+          //virtual void updateServerStats(Protocol::ServerStats& serverStats) const {}
 
           /**
            * Opaque metadata that the log keeps track of.
            */
-          Protocol::RaftLogMetadata::Metadata metadata;
+          //Protocol::RaftLogMetadata::Metadata metadata;
 
           /**
            * Print out a Log for debugging purposes.
@@ -176,9 +172,9 @@ namespace raftfs {
 
         protected:
 
-          // Log is not copyable
-          Log(const Log&) = delete;
-          Log& operator=(const Log&) = delete;
+          // Log is not copyable for saftty.
+          RaftLog(const RaftLog&) = delete;
+          RaftLog& operator=(const RaftLog&) = delete;
 
 
 
