@@ -20,13 +20,7 @@ namespace raftfs {
               hosts(opt.GetAllHosts()),
               leader_id(-1)
     {
-        ResetSock(follower_sock, hosts[rand() % hosts.size()]);
-        boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(follower_sock));
-        boost::shared_ptr<TMultiplexedProtocol> client_proto(
-                new TMultiplexedProtocol(proto, "FSClient")
-        );
-
-        follower_rpc = std::make_shared<raftfs::protocol::ClientServiceClient>(client_proto);
+        ResetRPCClient(follower_rpc, hosts[rand() % hosts.size()]);
 
         cout << "ask " << follower_sock->getHost() << endl;
         // get current leader
@@ -37,6 +31,16 @@ namespace raftfs {
             cout << "no leader" << endl;
 
     }
+
+
+    FSClient::~FSClient() {
+        if (follower_sock != nullptr && follower_sock->isOpen())
+            follower_sock->close();
+
+        if (leader_sock != nullptr && leader_sock->isOpen())
+            leader_sock->close();
+    }
+
 
     int32_t FSClient::GetLeader() {
         if (leader_id == -1) {
@@ -52,12 +56,30 @@ namespace raftfs {
     }
 
 
+    void FSClient::CheckLeaders() {
+        for (auto& h : hosts) {
+            ResetRPCClient(follower_rpc, h);
+            cout << " ask " << h << endl;
+            leader_id = -1;
+            GetLeader();
+        }
+    }
+
+
     void FSClient::ResetSock(boost::shared_ptr<THt::TSocket> &sock, string host) {
+        if (sock != nullptr && sock->isOpen())
+            sock->close();
         sock.reset(new TSocket(host, port));
     }
 
     void FSClient::ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient> &client, string host) {
+        ResetSock(follower_sock, host);
+        boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(follower_sock));
+        boost::shared_ptr<TMultiplexedProtocol> client_proto(
+                new TMultiplexedProtocol(proto, "FSClient")
+        );
 
+        follower_rpc.reset(new raftfs::protocol::ClientServiceClient(client_proto));
     }
 
 
