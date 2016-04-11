@@ -20,7 +20,10 @@ namespace raftfs {
     class FSClient {
     public:
         FSClient(Options& opt);
+        ~FSClient();
 
+        // only for test purpose
+        void CheckLeaders();
 
     private:
         int32_t GetLeader();

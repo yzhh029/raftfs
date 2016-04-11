@@ -93,6 +93,9 @@ namespace raftfs {
             void ChangeToFollower(int64_t new_term);
             void PostponeElection();
 
+            // for test
+            void ChangeLeaderID(int32_t newid);
+
         private:
             int32_t  self_id;
             std::string self_name;

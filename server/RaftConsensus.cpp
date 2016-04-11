@@ -117,7 +117,7 @@ namespace raftfs {
                         protocol::AppendEntriesResponse ae_resp;
 
                         ae_req.term = current_term;
-                        ae_req.leader_id = leader_id;
+                        ae_req.leader_id = self_id;
                         ae_req.prev_log_index = GetLastLogIndex();
                         ae_req.prev_log_term = GetLastLogTerm();
                         ae_req.leader_commit_index = GetLastLogIndex();
@@ -213,9 +213,7 @@ namespace raftfs {
             static uniform_int_distribution<> dis(lower_bound, upper_bound);
 
             next_election = Now() + chrono::milliseconds(dis(gen));
-            //next_election = Now() + chrono::seconds(2);
-            cout << "pp " << TimePointStr(next_election) << endl;
-            //new_event.notify_all();
+
         }
 
         // Change our role to leader and update leader ID.
@@ -233,7 +231,6 @@ namespace raftfs {
             current_role = Role::kFollower;
             current_term = new_term;
             leader_id = -1;
-            //new_event.notify_all();
         }
 
 
@@ -250,7 +247,7 @@ namespace raftfs {
 
                 ChangeToFollower(req.term);
                 leader_id = req.leader_id;
-                cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
+                cout << TimePointStr(Now()) <<" OnAE new leader (new term)" << leader_id << " RT:" << req.term << " change to follower" << endl;
                 //PostponeElection();
             } else if (current_role == Role::kCandidate && req.term == current_term) {
                 // have a new leader
@@ -258,18 +255,22 @@ namespace raftfs {
 
                 ChangeToFollower(req.term);
                 leader_id = req.leader_id;
-                cout << TimePointStr(Now()) <<" OnAE new leader " << leader_id << " RT:" << req.term << " change to follower" << endl;
+                cout << TimePointStr(Now()) <<" OnAE new leader" << leader_id << " RT:" << req.term << " change to follower" << endl;
                 resp.term = current_term;
             } else if (current_term > req.term) {
                 // reject rpc
+                cout << TimePointStr((Now())) << " OnAE slow term reject" << endl;
                 resp.term = current_term;
                 success = false;
             } else {
                 // normal rpc from leader
+                cout << TimePointStr(Now()) << " OnAE normal" << endl;
                 PostponeElection();
             }
 
-
+            if (success && leader_id == -1) {
+                leader_id = req.leader_id;
+            }
             //resp.term = current_term;
             resp.success = success;
 
@@ -307,6 +308,12 @@ namespace raftfs {
 
             resp.term = current_term;
             resp.vote_granted = grant;
+        }
+
+
+        void RaftConsensus::ChangeLeaderID(int32_t newid) {
+            cout << "leader id from " << leader_id << " to " << newid << endl;
+            leader_id = newid;
         }
 
 
