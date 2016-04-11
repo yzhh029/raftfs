@@ -1,5 +1,6 @@
 //
 // Created by yzhh on 3/29/16.
+// - GetLeader: For a client to get current leader.
 //
 
 #include "ClientRPCService.h"

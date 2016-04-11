@@ -24,10 +24,18 @@
     server/         :  Raft servers
      - server_main.cpp   :  **Program main entry**
      - RaftConsensus.*   :  Functions to perform Raft Consensus
+     - RaftMetaServer.*  :  Threads to handle state machine
+     - ClientRPCServer.* :  Functions for client's getting info.
+     - RaftRPCService.*  :  Def of RPC calls
     ------------------------------------------------------------------
     protocol/       :  Thrift's protocol def and generated files
      - compileThrift.sh  :  Generate thrift lib with def file
      - Raft.thrift       :  Raft definition file
      - *.cpp; *.h        :  Thrift generated files.
     ------------------------------------------------------------------
-    test/           :  Automated performance tests... 
+    test/           :  Unit tests and Performance tests
+    ------------------------------------------------------------------
+    client/			:  Client of the DFS
+     - client_main.cpp   :  Client main entry.
+     - RaftFS.*          :  Client of DFS functions.
+    
