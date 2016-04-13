@@ -13,13 +13,13 @@ namespace raftfs {
     namespace server {
         class ClientRPCService : virtual public protocol::ClientServiceIf {
         public:
-            ClientRPCService(std::shared_ptr<RaftConsensus>& state):
+            ClientRPCService(RaftConsensus& state):
                     raft_state(state) {}
 
             void GetLeader(protocol::GetLeaderResponse &_return) override ;
 
         private:
-            std::shared_ptr<RaftConsensus>& raft_state;
+            RaftConsensus& raft_state;
         };
     }
 }

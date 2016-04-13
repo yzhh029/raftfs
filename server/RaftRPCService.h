@@ -13,7 +13,7 @@ namespace raftfs {
     namespace  server {
         class RaftRPCService : virtual public protocol::RaftServiceIf {
         public:
-            RaftRPCService(std::shared_ptr<RaftConsensus>& state) :
+            RaftRPCService(RaftConsensus& state) :
                     raft_state(state){}
 
             void RequestVote(protocol::ReqVoteResponse &_return, const protocol::ReqVoteRequest &vote) override ;
@@ -22,7 +22,7 @@ namespace raftfs {
                                        const protocol::AppendEntriesRequest &append) override;
 
         private:
-            std::shared_ptr<RaftConsensus>& raft_state;
+            RaftConsensus& raft_state;
         };
     }
 }

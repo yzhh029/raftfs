@@ -42,14 +42,14 @@ namespace raftfs {
             boost::shared_ptr<TMultiplexedProcessor> mux_processor(new TMultiplexedProcessor);
             boost::shared_ptr<TProcessor> raft_processor(
                     new RaftServiceProcessor(
-                            boost::shared_ptr<RaftRPCService>(new RaftRPCService(raft_state))
+                            boost::shared_ptr<RaftRPCService>(new RaftRPCService(*raft_state))
                     )
             );
             mux_processor->registerProcessor("Raft", raft_processor);
 
             boost::shared_ptr<TProcessor> client_processor(
                     new ClientServiceProcessor(
-                            boost::shared_ptr<ClientRPCService>(new ClientRPCService(raft_state))
+                            boost::shared_ptr<ClientRPCService>(new ClientRPCService(*raft_state))
                     )
             );
             mux_processor->registerProcessor("FSClient", client_processor);
