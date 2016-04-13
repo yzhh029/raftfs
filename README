@@ -38,4 +38,6 @@
     client/			:  Client of the DFS
      - client_main.cpp   :  Client main entry.
      - RaftFS.*          :  Client of DFS functions.
-    
+    ------------------------------------------------------------------
+    storage/        :  Log / Storage related functions
+     - RaftLog.*         :  Memeory log functions.

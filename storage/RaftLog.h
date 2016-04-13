@@ -29,6 +29,7 @@ namespace raftfs {
 
             // Data structures to entry storage
 			std::vector<const Entry*> memoryLog;
+			Entry empty_ent;
 
 			/* Append Entry(s) and return range of indexes of the new entries
 			 * in the log, inclusive.
@@ -72,7 +73,7 @@ namespace raftfs {
 			/**
 			 * Remove log entries before the given index.
 			 */
-			void remoteEntryBefore(uint64_t firstIndex);
+			void removeEntryBefore(uint64_t firstIndex);
 
 			/**
 			 * Delete log entries past the given index.
