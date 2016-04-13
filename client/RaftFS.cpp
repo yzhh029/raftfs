@@ -6,6 +6,7 @@
 #include "RaftFS.h"
 #include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
+#include <protocol/TCompactProtocol.h>
 #include <protocol/TMultiplexedProtocol.h>
 
 using namespace std;
@@ -74,7 +75,8 @@ namespace raftfs {
 
     void FSClient::ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient> &client, string host) {
         ResetSock(follower_sock, host);
-        boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(follower_sock));
+        //boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(follower_sock));
+        boost::shared_ptr<TCompactProtocol> proto(new TCompactProtocol(follower_sock));
         boost::shared_ptr<TMultiplexedProtocol> client_proto(
                 new TMultiplexedProtocol(proto, "FSClient")
         );

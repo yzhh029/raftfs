@@ -1,9 +1,19 @@
 
 namespace cpp raftfs.protocol
 
+enum MetaOp {
+    kMkdir,
+    kRmdir,
+    kCreate,
+    kDelete,
+    kNoop
+}
+
 struct Entry {
 1: required i64 term;
 2: required i64 index;
+3: required MetaOp op;
+4: required binary value;
 }
 
 struct ReqVoteRequest {

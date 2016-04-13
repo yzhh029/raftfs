@@ -11,6 +11,7 @@
 #include <transport/TSocket.h>
 #include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
+#include <protocol/TCompactProtocol.h>
 #include <protocol/TMultiplexedProtocol.h>
 
 using namespace std;
@@ -27,7 +28,8 @@ namespace raftfs {
 
             sock.reset(new TSocket(host, port));
             //sock->setRecvTimeout(300);
-            boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(sock));
+            //boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(sock));
+            boost::shared_ptr<TCompactProtocol> proto(new TCompactProtocol(sock));
             boost::shared_ptr<TMultiplexedProtocol> raft_proto(
                     new TMultiplexedProtocol(proto, "Raft")
             );

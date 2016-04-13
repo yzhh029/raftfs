@@ -6,7 +6,7 @@
 #include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
 #include <protocol/TMultiplexedProtocol.h>
-
+#include <protocol/TCompactProtocol.h>
 #include "../protocol/RaftService.h"
 
 #include <iostream>
@@ -20,7 +20,7 @@ using namespace std;
 int main() {
 
     boost::shared_ptr<TSocket> sock(new TSocket("xinu01.cs.purdue.edu", 12345));
-    boost::shared_ptr<TBinaryProtocol> proto(new TBinaryProtocol(sock));
+    boost::shared_ptr<TCompactProtocol> proto(new TCompactProtocol(sock));
     boost::shared_ptr<TMultiplexedProtocol> raft_proto(
             new TMultiplexedProtocol(proto, "Raft")
     );

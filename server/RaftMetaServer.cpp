@@ -8,6 +8,7 @@
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
+#include <protocol/TCompactProtocol.h>
 #include <protocol/TMultiplexedProtocol.h>
 #include <processor/TMultiplexedProcessor.h>
 #include <concurrency/ThreadManager.h>
@@ -30,7 +31,7 @@ namespace raftfs {
                 raft_state(new RaftConsensus(opt))
         {
             cout << "MetaServer init" << endl;
-            InitRPCServer(opt.GetPort(), 5);
+            InitRPCServer(opt.GetPort(), 10);
         }
 
 
@@ -63,7 +64,8 @@ namespace raftfs {
                     mux_processor,
                     boost::make_shared<transport::TServerSocket>(_port),
                     boost::make_shared<transport::TBufferedTransportFactory>(),
-                    boost::make_shared<apache::thrift::protocol::TBinaryProtocolFactory>(),
+                    //boost::make_shared<apache::thrift::protocol::TBinaryProtocolFactory>(),
+                    boost::make_shared<apache::thrift::protocol::TCompactProtocolFactory>(),
                     threadManager
             );
         }
