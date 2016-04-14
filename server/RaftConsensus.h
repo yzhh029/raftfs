@@ -18,6 +18,8 @@
 #include <transport/TSocket.h>
 
 #include "../protocol/RaftService.h"
+#include "../protocol/ClientService.h"
+#include "../storage/LogManager.h"
 #include "../utils/Options.h"
 #include "../utils/time_utils.h"
 
@@ -69,15 +71,16 @@ namespace raftfs {
 
             void StartRemoteLoops();
             void StartLeaderCheckLoop();
-
+            // Raft rpc handler
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
+
+            // Meta rpc handler
+            protocol::Status::type OnMetaOperation(protocol::MetaOp::type op, std::string path, void* params);
 
             int32_t GetLeader() const {return leader_id;}
         private:
 
-            int64_t GetLastLogTerm() const {return log.back().term;}
-            int64_t GetLastLogIndex() const {return log.back().index;}
             /*
              * Perodically check whether the leader node is timeout.
              * Should run in a thread
@@ -139,7 +142,8 @@ namespace raftfs {
 
             // temporary in memory log
             // TODO implement a log class
-            std::list<raftfs::protocol::Entry> log;
+            //std::list<raftfs::protocol::Entry> log;
+            LogManager log;
 
             std::mutex m;
             std::condition_variable new_event;

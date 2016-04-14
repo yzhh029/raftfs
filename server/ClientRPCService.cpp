@@ -8,14 +8,22 @@
 #include <iostream>
 
 using namespace std;
+using namespace raftfs::protocol;
 
 namespace raftfs {
     namespace server {
 
-        void ClientRPCService::GetLeader(protocol::GetLeaderResponse &_return) {
+        void ClientRPCService::GetLeader(GetLeaderResponse &_return) {
             _return.leader_id = raft_state.GetLeader();
             cout << " recv GET LEADER " << _return.leader_id << endl;
         }
+
+
+        void ClientRPCService::Mkdir(MkdirResponse &_return, const MkdirRequest &new_dir) {
+            cout << " recv MKDIR " << new_dir.path << endl;
+            raft_state.OnMetaOperation(MetaOp::kMkdir, new_dir.path, nullptr);
+        }
+
 
     }
 }

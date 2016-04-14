@@ -58,11 +58,6 @@ namespace raftfs {
 
             quorum_size = (remotes.size() + 1) / 2 + 1;
 
-            // add an emtry log entry
-            protocol::Entry entry;
-            entry.index = 0;
-            entry.term = current_term;
-            log.push_back(entry);
             PostponeElection();
         }
 
@@ -120,9 +115,9 @@ namespace raftfs {
 
                         ae_req.term = current_term;
                         ae_req.leader_id = self_id;
-                        ae_req.prev_log_index = GetLastLogIndex();
-                        ae_req.prev_log_term = GetLastLogTerm();
-                        ae_req.leader_commit_index = GetLastLogIndex();
+                        ae_req.prev_log_index = log.GetLastLogIndex();
+                        ae_req.prev_log_term = log.GetLastLogTerm();
+                        ae_req.leader_commit_index = log.GetLastCommitIndex();
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
                             << " L:" << leader_id << endl;
                         lock.unlock();
@@ -153,8 +148,8 @@ namespace raftfs {
                         protocol::ReqVoteResponse resp;
                         req.candidate_id = self_id;
                         req.term = current_term;
-                        req.last_log_index = GetLastLogIndex();
-                        req.last_log_term = GetLastLogTerm();
+                        req.last_log_index = log.GetLastLogIndex();
+                        req.last_log_term = log.GetLastLogTerm();
 
                         cout << TimePointStr(Now()) << " ask vote to " << id << " T:" << current_term << endl;
                         // do rpc call
@@ -284,8 +279,7 @@ namespace raftfs {
         void RaftConsensus::OnRequestVote(protocol::ReqVoteResponse &resp, const protocol::ReqVoteRequest &req) {
             lock_guard<mutex> lock(m);
 
-            int64_t lastlogterm = GetLastLogTerm();
-            int64_t lastlogindex = GetLastLogIndex();
+            auto term_index = log.GetLastLogTermAndIndex();
             bool grant = false;
 
             if (req.term > current_term) {
@@ -294,8 +288,8 @@ namespace raftfs {
             }
 
             // make sure candidate's log is up to date
-            if (lastlogindex <= req.last_log_index
-                    && lastlogterm <= req.last_log_term) {
+            if (term_index.second <= req.last_log_index
+                    && term_index.first <= req.last_log_term) {
                 auto vote = vote_for.find(req.term);
 
                 if (vote == vote_for.end() || (vote != vote_for.end() && vote->second == req.candidate_id)) {
@@ -310,6 +304,16 @@ namespace raftfs {
 
             resp.term = current_term;
             resp.vote_granted = grant;
+        }
+
+
+        protocol::Status::type RaftConsensus::OnMetaOperation(protocol::MetaOp::type op, std::string path, void *params) {
+            cout << TimePointStr(Now()) << op << " " << path << endl;
+            if (leader_id == -1) {
+                return protocol::Status::kNoLeader;
+            } else {
+                return protocol::Status::kOK;
+            }
         }
 
 

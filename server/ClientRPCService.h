@@ -18,6 +18,8 @@ namespace raftfs {
 
             void GetLeader(protocol::GetLeaderResponse &_return) override ;
 
+            void Mkdir(protocol::MkdirResponse &_return, const protocol::MkdirRequest &new_dir) override;
+
         private:
             RaftConsensus& raft_state;
         };

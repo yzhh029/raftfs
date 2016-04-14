@@ -40,4 +40,4 @@
      - RaftFS.*          :  Client of DFS functions.
     ------------------------------------------------------------------
     storage/        :  Log / Storage related functions
-     - RaftLog.*         :  Memeory log functions.
+     - LogManager.*         :  Memeory log functions.

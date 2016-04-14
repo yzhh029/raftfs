@@ -14,7 +14,10 @@ int main(int argc, char** argv) {
     Options opt(argc, argv);
     FSClient client(opt);
 
-    client.CheckLeaders();
+    //client.CheckLeaders();
+
+    string path("/test");
+    cout << client.Mkdir(path) << endl;
     cout << "hello world" << endl;
 
     return 0;

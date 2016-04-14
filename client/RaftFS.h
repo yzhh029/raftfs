@@ -24,11 +24,14 @@ namespace raftfs {
 
         // only for test purpose
         void CheckLeaders();
+        protocol::Status::type Mkdir(std::string& path);
 
     private:
         int32_t GetLeader();
         void ResetSock(boost::shared_ptr<THt::TSocket>& sock, std::string host);
-        void ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient>& client, std::string host);
+        void ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient>& client,
+                            boost::shared_ptr<THt::TSocket>& sock,
+                            std::string host);
 
     private:
         int port;
