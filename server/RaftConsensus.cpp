@@ -156,7 +156,7 @@ namespace raftfs {
                         lock.unlock();
                         try {
                             if (remote->Connected())
-                                rpc_client->RequestVote(resp, req);
+                            	rpc_client->RequestVote(resp, req);
                         } catch (transport::TTransportException te) {
                             lock.lock();
                             break;
@@ -272,6 +272,13 @@ namespace raftfs {
             resp.success = success;
 
             // TODO log operations
+            /* Receiver implementation #3 and #4: -> All done by LogManager.
+             * #3: Delete existing entry if they conflict with leader.
+             * #4: Append new entries not in the log
+             *     --> One RPC can contain multiple entries...
+             */
+            log.Append(&req.entries);
+
 
         }
 

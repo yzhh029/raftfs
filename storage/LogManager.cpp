@@ -20,7 +20,11 @@ namespace raftfs {
         }
 
         LogManager::~LogManager() {
+        	// TODO: shall we lock here?
             // TODO: check if we need to flush before closed.
+        	for(auto p: memory_log) {
+        		delete p;	// FIXME: remove this if don't need recycle entries.
+        	}
         }
 
 
@@ -35,8 +39,27 @@ namespace raftfs {
             return memory_log.size();
         }
 
+        int64_t LogManager::GetEntryLoc(int64_t lookup_index) {
+        	//lock_guard<mutex> guard(m);  //locked outside...
+        	int i;
+        	for(i=0; i < memory_log.size(); ++i) {
+        		if(memory_log[i]->index == lookup_index) {
+        			return i;
+        		}
+        	}
+        	// Can't not found
+        	return -1;
+        }
 
+
+        /* Receiver implementation #3 and #4: -> All done by LogManager.
+         * #3: Delete existing entry if they conflict with leader.
+         * #4: Append new entries not in the log
+         *     --> One RPC can contain multiple entries...
+         */
         bool LogManager::Append(LogManager::Entry *new_entry) {
+        	// FIXME: These only contains Receiveer Implementation #4. Need #3.
+        	// Currently not used...
             std::lock_guard<std::mutex> guard(m);
             if (memory_log.empty() ||
                     (new_entry->term >= memory_log.back()->term
@@ -49,7 +72,43 @@ namespace raftfs {
             return false;
         }
 
-        bool LogManager::Append(std::vector<Entry *> new_entries) {
+        /* Receiver implementation #3 and #4: -> All done by LogManager.
+         * #3: Delete existing entry if they conflict with leader.
+         * #4: Append new entries not in the log
+         *     --> One RPC can contain multiple entries...
+         */
+        bool LogManager::Append(const std::vector<Entry> * p_new_entries) {
+            std::lock_guard<std::mutex> guard(m);
+            //
+            if(p_new_entries->empty())
+            	return false;
+
+            // #4: Append new entries not in the log
+            if (memory_log.empty() ||
+                    (p_new_entries->front().term >= memory_log.back()->term
+                     && p_new_entries->front().index > memory_log.back()->index
+                    )
+                ) {
+            	// FIXME: Make a new copy of entries in request to
+            	//        prevent request is deleted later after append
+            	for (auto ent: *(p_new_entries)) {
+            		Entry * ent_copy = new Entry(ent);
+                    memory_log.push_back(ent_copy);
+            	}
+                return true;
+            } else {
+            	// #4
+            	int64_t existing_entry_at;
+            	existing_entry_at = GetEntryLoc(p_new_entries->front().index);
+            	if(existing_entry_at == -1) {
+            		// TODO: behavior needs to be dealt with...
+            	} else {
+            		// TODO: Need to check if we have deadlock inside...
+            		RemoveEntryAfter(existing_entry_at);
+            	}
+            	return true;
+            }
+            // Some possible error path.
             return false;
         }
 
@@ -76,7 +135,8 @@ namespace raftfs {
             if (memory_log.empty()) {
                 return 0;
             }
-            return memory_log.back()->index;
+            //return memory_log.back()->index;
+            return memory_log.front()->index;
         }
 
         int64_t LogManager::GetLastLogTerm() const {
@@ -95,7 +155,25 @@ namespace raftfs {
             return pair<int64_t, int64_t>(memory_log.back()->term, memory_log.back()->index);
         }
 
-
+        void LogManager::RemoveEntryAfter(int64_t firstIndex)	// inclusive
+        {	//TODO: Verification
+        	lock_guard<mutex> guard(m);
+            std::deque<Entry *>::iterator from, to;
+            int i;
+            for(i=0; i<memory_log.size(); ++i) {
+                if(memory_log[i]->index == firstIndex) {
+                    from = memory_log.begin() + i;	// +i+1 if exclusive;
+                    to = memory_log.end();
+                    break;
+                }
+            }
+            // Stop removal if found nothing.
+            if(i == memory_log.size()) {
+                cout << "Error: entry not found!" << endl;
+                return;
+            }
+            memory_log.erase(from, to);
+        }
 
 
 // TODO: Finish these function bodies.

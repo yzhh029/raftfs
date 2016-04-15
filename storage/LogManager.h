@@ -33,10 +33,11 @@ namespace raftfs {
 			/* Append Entry(s) and return whether append sucess.
 			 */
             bool Append(Entry * new_entry);
-            bool Append(std::vector<Entry *> new_entries);
+            bool Append(const std::vector<Entry> * new_entries);	// fix for new def.
 
 
 			const Entry& GetEntry(int64_t index) const;
+			int64_t GetEntryLoc(int64_t index);
 
 			int64_t GetLogStartIndex() const;
 			int64_t GetLastLogIndex() const;

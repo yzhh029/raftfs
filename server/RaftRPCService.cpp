@@ -23,7 +23,7 @@ namespace raftfs {
             //_return.vote_granted = true;
         }
 
-
+        // When receive AppendEntries() RPC call from Leader.
         void RaftRPCService::AppendEntries(protocol::AppendEntriesResponse &_return,
                                            const protocol::AppendEntriesRequest &append) {
             cout << " recv ae request" << endl;
