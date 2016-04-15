@@ -115,11 +115,20 @@ namespace raftfs {
 
                         ae_req.term = current_term;
                         ae_req.leader_id = self_id;
-                        ae_req.prev_log_index = log.GetLastLogIndex();
                         ae_req.prev_log_term = log.GetLastLogTerm();
                         ae_req.leader_commit_index = log.GetLastCommitIndex();
-                        cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
-                            << " L:" << leader_id << endl;
+                        //cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
+                        //    << " L:" << leader_id << endl;
+                        ae_req.prev_log_index = remote->GetNextIndex() - 1;
+                        
+                        // found one or more new log entry, add them to the request
+                        if (ae_req.prev_log_index < log.GetLastLogIndex()) {
+                            cout << id << " new entries prev:" << ae_req.prev_log_index  << endl;
+                            ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
+                            for (auto &e : ae_req.entries) {
+                                cout << id << "   " << e.index << " " << e.op << " " << e.value << endl;
+                            }
+                        }
                         lock.unlock();
                         try {
                             if (remote->Connected())
@@ -131,8 +140,8 @@ namespace raftfs {
                             break;
                         }
                         lock.lock();
-                        cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
-                        << " S: " << ae_resp.success << endl;
+                        //cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
+                        //<< " S: " << ae_resp.success << endl;
 
 
                         break;
@@ -217,6 +226,13 @@ namespace raftfs {
         void RaftConsensus::ChangeToLeader() {
             current_role = Role::kLeader;
             leader_id = self_id;
+
+            int64_t next_index = log.GetLastLogIndex() + 1;
+            for (auto &r : remotes) {
+                r.second->ResetNextIndex(next_index);
+            }
+
+            // notify all peer thread to send AE
             new_event.notify_all();
         }
 
@@ -236,10 +252,9 @@ namespace raftfs {
                                             const protocol::AppendEntriesRequest &req) {
             lock_guard<mutex> lock(m);
             bool success = true;
-
+            resp.term = current_term;
             // if sender has higher term, receiver catch up his term and change to follower
             if (req.term > current_term) {
-                resp.term = current_term;
                 PostponeElection();
 
                 ChangeToFollower(req.term);
@@ -257,18 +272,30 @@ namespace raftfs {
             } else if (current_term > req.term) {
                 // reject rpc
                 cout << TimePointStr((Now())) << " OnAE slow term reject" << endl;
-                resp.term = current_term;
                 success = false;
             } else {
                 // normal rpc from leader
-                cout << TimePointStr(Now()) << " OnAE normal" << endl;
+                //cout << TimePointStr(Now()) << " OnAE normal" << endl;
                 PostponeElection();
             }
 
+            if (success) {
+                if (leader_id == -1) {
+                    leader_id = req.leader_id;
+                }
+
+                // log operations
+                if (log.GetLastLogTerm() == req.prev_log_term
+                        && log.GetLastLogIndex() >= req.prev_log_index) {          // log term check
+
+                } else {
+                    success = false;
+                }
+
+            }
             if (success && leader_id == -1) {
                 leader_id = req.leader_id;
             }
-            //resp.term = current_term;
             resp.success = success;
 
             // TODO log operations
@@ -309,9 +336,22 @@ namespace raftfs {
 
         protocol::Status::type RaftConsensus::OnMetaOperation(protocol::MetaOp::type op, std::string path, void *params) {
             cout << TimePointStr(Now()) << op << " " << path << endl;
+            // TODO add op speration
+            // follower should only process non modification operation
             if (leader_id == -1) {
+                cout << "not leader" << endl;
                 return protocol::Status::kNoLeader;
             } else {
+
+                protocol::Entry* e = new protocol::Entry();
+
+                e->op = op;
+                e->value = path;
+                e->term = current_term;
+
+                log.Append(e);
+                cout << TimePointStr(Now()) << "append new e" << e->term << e->index << endl;
+                new_event.notify_all();
                 return protocol::Status::kOK;
             }
         }

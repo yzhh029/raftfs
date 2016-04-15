@@ -8,6 +8,7 @@
 
 #include "LogManager.h"
 #include <mutex>
+#include <algorithm>
 
 using namespace std;
 
@@ -38,20 +39,28 @@ namespace raftfs {
 
         bool LogManager::Append(LogManager::Entry *new_entry) {
             std::lock_guard<std::mutex> guard(m);
-            if (memory_log.empty() ||
-                    (new_entry->term >= memory_log.back()->term
-                     && new_entry->index > memory_log.back()->index
-                    )
-                ) {
-                memory_log.push_back(new_entry);
-                return true;
-            }
-            return false;
+
+            new_entry->index = memory_log.size() + 1;
+            memory_log.push_back(new_entry);
+
+            return true;
         }
 
         bool LogManager::Append(std::vector<Entry *> new_entries) {
             return false;
         }
+
+
+        vector<LogManager::Entry> LogManager::GetEntriesStartAt(int64_t start_index) const {
+
+            auto it = lower_bound(memory_log.begin(), memory_log.end(), start_index, [](const Entry* lhs, int64_t index){ return lhs->index < index;});
+
+            vector<Entry> entries;
+            for (; it != memory_log.end() ; ++it)
+                entries.push_back(*(*it));
+            return entries;
+        }
+
 
         int64_t LogManager::GetLastLogIndex() const {
             lock_guard<mutex> lock(m);

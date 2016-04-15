@@ -36,7 +36,9 @@ namespace raftfs {
             bool Append(std::vector<Entry *> new_entries);
 
 
-			const Entry& GetEntry(int64_t index) const;
+			const Entry* GetEntry(int64_t index) const;
+
+            std::vector<Entry> GetEntriesStartAt(int64_t start_index) const;
 
 			int64_t GetLogStartIndex() const;
 			int64_t GetLastLogIndex() const;

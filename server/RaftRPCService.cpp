@@ -26,8 +26,8 @@ namespace raftfs {
 
         void RaftRPCService::AppendEntries(protocol::AppendEntriesResponse &_return,
                                            const protocol::AppendEntriesRequest &append) {
-            cout << " recv ae request" << endl;
-            cout << " term " << append.term << " leader_id" << append.leader_id << endl;
+            //cout << " recv ae request" << endl;
+            //cout << " term " << append.term << " leader_id" << append.leader_id << endl;
             raft_state.OnAppendEntries(_return, append);
             //_return.term = append.term + 1;
             //_return.success = true;

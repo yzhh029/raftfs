@@ -41,6 +41,9 @@ namespace raftfs {
                 return rpc_client;
             }
 
+            void ResetNextIndex(int64_t new_index) { next_index = new_index; }
+            int64_t GetNextIndex() const { return next_index;}
+
             bool Connected() {
                 if (sock->isOpen())
                     return true;
@@ -55,6 +58,7 @@ namespace raftfs {
             boost::shared_ptr<apache::thrift::transport::TSocket> sock;
             std::shared_ptr<raftfs::protocol::RaftServiceClient> rpc_client;
 
+            int64_t next_index;
         };
 
         class RaftConsensus {
