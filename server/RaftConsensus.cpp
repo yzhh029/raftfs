@@ -120,7 +120,7 @@ namespace raftfs {
                         //cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
                         //    << " L:" << leader_id << endl;
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
-                        
+
                         // found one or more new log entry, add them to the request
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
                             cout << id << " new entries prev:" << ae_req.prev_log_index  << endl;
