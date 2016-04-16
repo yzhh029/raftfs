@@ -122,6 +122,7 @@ namespace raftfs {
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
 
                         // found one or more new log entry, add them to the request
+                        // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
                             cout << id << " new entries prev:" << ae_req.prev_log_index  << endl;
                             ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
@@ -140,8 +141,12 @@ namespace raftfs {
                             break;
                         }
                         lock.lock();
+                        // TODO: deal with response...Results: Term and Success.
                         //cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
                         //<< " S: " << ae_resp.success << endl;
+
+                        // TODO: if success, reply commit to client.
+                        // Need new var to
 
 
                         break;
@@ -345,6 +350,7 @@ namespace raftfs {
             cout << TimePointStr(Now()) << op << " " << path << endl;
             // TODO add op speration
             // follower should only process non modification operation
+            //  --> so follwer can response to read-only op.
             if (leader_id == -1) {
                 cout << "not leader" << endl;
                 return protocol::Status::kNoLeader;
@@ -356,9 +362,13 @@ namespace raftfs {
                 e->value = path;
                 e->term = current_term;
 
-                log.Append(e);
+                log.Append(e);	// Leader's log
                 cout << TimePointStr(Now()) << "append new e" << e->term << e->index << endl;
-                new_event.notify_all();
+                new_event.notify_all();	// notify remote servers
+                // TODO: wait majority to commit.
+                // 1. check commit index.
+                // 2. Add a one-sec timeout etc.
+
                 return protocol::Status::kOK;
             }
         }

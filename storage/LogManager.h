@@ -37,13 +37,13 @@ namespace raftfs {
             // Zhihao: when the follower got new entries in the requests,
             // it will make a copy for each entry and store the pointers in the vector
             // I suggest to change the element to pointer type
-            bool Append(std::vector<Entry *> new_entries);
+            bool Append(const std::vector<Entry> * new_entries);
 
 
 			const Entry* GetEntry(int64_t index) const;
 
             std::vector<Entry> GetEntriesStartAt(int64_t start_index) const;
-            int64_t LogManager::GetEntryLoc(int64_t lookup_index);
+            int64_t GetEntryLoc(int64_t lookup_index);
 
 			int64_t GetLogStartIndex() const;
 			int64_t GetLastLogIndex() const;
