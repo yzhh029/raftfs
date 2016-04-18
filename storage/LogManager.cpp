@@ -90,6 +90,7 @@ namespace raftfs {
             	//        prevent request is deleted later after append
             	for (auto ent: *(p_new_entries)) {
             		Entry * ent_copy = new Entry(ent);
+            		ent_copy->index = memory_log.size() + 1;
                     memory_log.push_back(ent_copy);
             	}
                 return true;
@@ -102,6 +103,11 @@ namespace raftfs {
             	} else {
             		// TODO: Need to check if we have deadlock inside...
             		RemoveEntryAfter(existing_entry_at);
+            		for (auto ent: *(p_new_entries)) {
+						Entry * ent_copy = new Entry(ent);
+						ent_copy->index = memory_log.size() + 1;
+						memory_log.push_back(ent_copy);
+					}
             	}
             	return true;
             }

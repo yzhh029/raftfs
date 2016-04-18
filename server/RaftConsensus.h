@@ -44,6 +44,9 @@ namespace raftfs {
             void ResetNextIndex(int64_t new_index) { next_index = new_index; }
             int64_t GetNextIndex() const { return next_index;}
 
+            void SetMatchIndex(int64_t new_index) { match_index = new_index; }
+            int64_t GetMatchIndex() const { return match_index;}
+
             bool Connected() {
                 if (sock->isOpen())
                     return true;
@@ -59,6 +62,7 @@ namespace raftfs {
             std::shared_ptr<raftfs::protocol::RaftServiceClient> rpc_client;
 
             int64_t next_index;
+            int64_t match_index;
         };
 
         class RaftConsensus {
@@ -144,10 +148,17 @@ namespace raftfs {
              */
             std::chrono::steady_clock::time_point next_election;
 
-            // temporary in memory log
-            // TODO implement a log class
-            //std::list<raftfs::protocol::Entry> log;
+            /*
+             * Handle log data structure / append operations -- Temporary in memory.
+             */
             LogManager log;
+            /*
+             * for each election round, vote_pool stores the remote node id who grant their votes
+             * need to be cleared at the beginning of election
+             */
+            //std::set<int32_t> log_append_status;
+
+
 
             std::mutex m;
             std::condition_variable new_event;

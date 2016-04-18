@@ -23,7 +23,7 @@ namespace raftfs {
     namespace server {
 
         RemoteHost::RemoteHost(int32_t _id, std::string host_name, int port) :
-            host(host_name), id(_id)
+            host(host_name), id(_id), match_index(-1)
         {
 
             sock.reset(new TSocket(host, port));
@@ -74,7 +74,9 @@ namespace raftfs {
             thread(&RaftConsensus::CheckLeaderLoop, this).detach();
         }
 
-
+        /*
+         * Thread 1 in raft_server
+         */
         void RaftConsensus::CheckLeaderLoop() {
 
             //this_thread::sleep_for(chrono::seconds(1)); // currently 1sec.
@@ -93,7 +95,9 @@ namespace raftfs {
             }
         }
 
-
+        /*
+         * Thread 2 in raft_server
+         */
         void RaftConsensus::RemoteHostLoop(std::shared_ptr<RemoteHost> remote) {
 
             string name = remote->GetName();
@@ -106,9 +110,9 @@ namespace raftfs {
             unique_lock<mutex> lock(m);
 
             while (!stop) {
-
                 //cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
+                	//-----------------------------------------------------
                     case Role::kLeader: {
                         protocol::AppendEntriesRequest ae_req;
                         protocol::AppendEntriesResponse ae_resp;
@@ -117,9 +121,10 @@ namespace raftfs {
                         ae_req.leader_id = self_id;
                         ae_req.prev_log_term = log.GetLastLogTerm();
                         ae_req.leader_commit_index = log.GetLastCommitIndex();
-                        //cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
-                        //    << " L:" << leader_id << endl;
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
+
+                        cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
+                            << " L:" << leader_id << endl;
 
                         // found one or more new log entry, add them to the request
                         // TODO: limit maximum entry size to limit request size.
@@ -132,8 +137,24 @@ namespace raftfs {
                         }
                         lock.unlock();
                         try {
-                            if (remote->Connected())
+                            if (remote->Connected()) {
+                            	/* Append entries to remote servers.
+                            	 * - Calls RaftServiceClient::AppendEntries()
+                            	 *   IN: ae_req;	OUT: ae_resp
+                            	 */
                                 rpc_client->AppendEntries(ae_resp, ae_req);
+								// TODO: deal with response...Results: Term and Success.
+								cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
+								<< " S: " << ae_resp.success << endl;
+
+								// TODO: if success, reply commit to client.
+								// Need new var to
+								if(ae_resp.success) {
+									//remote->SetMatchIndex(ae_req.entries.back().index);
+									// TODO: update log's last commit index.
+								}
+                            }
+
                         } catch (transport::TTransportException te) {
                             //cout << te.what() << endl;
                             cout << "lost communication to " << name << endl;
@@ -141,21 +162,15 @@ namespace raftfs {
                             break;
                         }
                         lock.lock();
-                        // TODO: deal with response...Results: Term and Success.
-                        //cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
-                        //<< " S: " << ae_resp.success << endl;
-
-                        // TODO: if success, reply commit to client.
-                        // Need new var to
-
-
                         break;
                     }
+                    //-----------------------------------------------------
                     case Role::kFollower: {
 
 
                         break;
                     }
+                    //-----------------------------------------------------
                     case Role::kCandidate: {
                         // construct message
                         protocol::ReqVoteRequest req;
@@ -195,6 +210,7 @@ namespace raftfs {
                         break;
                     }
                 }
+                // Wait for new event and process next loop.
                 new_event.wait_for(lock, chrono::milliseconds(250));
 
             }
@@ -292,8 +308,8 @@ namespace raftfs {
                 // log operations
                 if (log.GetLastLogTerm() == req.prev_log_term
                         && log.GetLastLogIndex() >= req.prev_log_index) {          // log term check
-
                 } else {
+                	cout << "check here!!" << endl;
                     success = false;
                 }
 
@@ -301,7 +317,7 @@ namespace raftfs {
             if (success && leader_id == -1) {
                 leader_id = req.leader_id;
             }
-            resp.success = success;
+
 
             // TODO log operations
             /* Receiver implementation #3 and #4: -> All done by LogManager.
@@ -311,7 +327,8 @@ namespace raftfs {
              */
             log.Append(&req.entries);
 
-
+            // TODO: Add log append criteria if success state is changed.
+            resp.success = success;
         }
 
         // Handle RPC: OnRequestVote
