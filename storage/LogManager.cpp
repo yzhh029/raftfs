@@ -144,6 +144,14 @@ namespace raftfs {
             return last_commited_index;
         }
 
+        void LogManager::SetLastCommitIndex(int64_t new_index) {
+            lock_guard<mutex> lock(m);
+            //if (memory_log.empty()) {
+            //    return 0;
+            //}
+            last_commited_index = new_index;
+        }
+
 
         int64_t LogManager::GetLogStartIndex() const {
             lock_guard<mutex> lock(m);

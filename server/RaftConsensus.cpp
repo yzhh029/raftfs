@@ -121,6 +121,7 @@ namespace raftfs {
                         ae_req.leader_id = self_id;
                         ae_req.prev_log_term = log.GetLastLogTerm();
                         ae_req.leader_commit_index = log.GetLastCommitIndex();
+                        //-- Current log index at remote host.
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
 
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
@@ -130,12 +131,15 @@ namespace raftfs {
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
                             cout << id << " new entries prev:" << ae_req.prev_log_index  << endl;
+                            // Copy new entries into request.
                             ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
+                            // Print out new entries for information.
                             for (auto &e : ae_req.entries) {
                                 cout << id << "   " << e.index << " " << e.op << " " << e.value << endl;
                             }
                         }
                         lock.unlock();
+                        //-- Push entries to remote --
                         try {
                             if (remote->Connected()) {
                             	/* Append entries to remote servers.
@@ -152,6 +156,7 @@ namespace raftfs {
 								if(ae_resp.success) {
 									//remote->SetMatchIndex(ae_req.entries.back().index);
 									// TODO: update log's last commit index.
+									remote->ResetNextIndex(log.GetLastLogIndex());
 								}
                             }
 
@@ -267,6 +272,23 @@ namespace raftfs {
             leader_id = -1;
         }
 
+        /* FIXME: We only check the index without content.
+         * Verify if we will have problem by doing so...
+         */
+        bool RaftConsensus::MatchRemoteIndex(int64_t new_index) {
+        	// TODO: check if we need a lock_guard here...
+        	int32_t sync_hosts = 0;
+        	for (auto &r : remotes) {
+        		if(r.second->GetNextIndex() >= new_index) {
+        			sync_hosts++;
+        		}
+        	}
+        	if(sync_hosts >= quorum_size) {
+        		return true;
+        	} else {
+        		return false;
+        	}
+        }
 
         // Handle RPC: AppendEntries()
         void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
@@ -306,12 +328,25 @@ namespace raftfs {
                 }
 
                 // log operations
+                /* FIXME: double check here:
+                 * req.prev_log_term may have larger term if remote
+                 * has lost connection for a while */
+				#if(0)
                 if (log.GetLastLogTerm() == req.prev_log_term
                         && log.GetLastLogIndex() >= req.prev_log_index) {          // log term check
                 } else {
                 	cout << "check here!!" << endl;
                     success = false;
                 }
+				#endif
+                // TODO log operations
+                /* Receiver implementation #3 and #4: -> All done by LogManager.
+                 * #3: Delete existing entry if they conflict with leader.
+                 * #4: Append new entries not in the log
+                 *     --> One RPC can contain multiple entries...
+                 */
+                log.Append(&req.entries);
+                // TODO: return Append success or not
 
             }
             if (success && leader_id == -1) {
@@ -319,13 +354,6 @@ namespace raftfs {
             }
 
 
-            // TODO log operations
-            /* Receiver implementation #3 and #4: -> All done by LogManager.
-             * #3: Delete existing entry if they conflict with leader.
-             * #4: Append new entries not in the log
-             *     --> One RPC can contain multiple entries...
-             */
-            log.Append(&req.entries);
 
             // TODO: Add log append criteria if success state is changed.
             resp.success = success;
@@ -380,11 +408,27 @@ namespace raftfs {
                 e->term = current_term;
 
                 log.Append(e);	// Leader's log
-                cout << TimePointStr(Now()) << "append new e" << e->term << e->index << endl;
+                cout << TimePointStr(Now()) << "append new e" << e->term
+                		<< ":" << e->index << endl;
                 new_event.notify_all();	// notify remote servers
                 // TODO: wait majority to commit.
                 // 1. check commit index.
                 // 2. Add a one-sec timeout etc.
+                bool commited = false;
+                while(true) {
+                	this_thread::sleep_for(chrono::milliseconds(50));
+                	if( MatchRemoteIndex( log.GetLastLogIndex() ) ) {
+                		commited = true;
+                		break;
+                	}
+                	// TODO: timeout?
+                }
+                if(commited) {
+                	log.SetLastCommitIndex(log.GetLastLogIndex());
+                }
+
+                cout << TimePointStr(Now()) << "append new e" << e->term
+                		<< ":" << e->index << "-- Reached Majority" << endl;
 
                 return protocol::Status::kOK;
             }

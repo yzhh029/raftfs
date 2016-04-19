@@ -51,6 +51,8 @@ namespace raftfs {
             int64_t GetLastCommitIndex() const;
             std::pair<int64_t, int64_t> GetLastLogTermAndIndex() const;
 
+            void SetLastCommitIndex(int64_t new_index);
+
 			/**
 			 * Remove log entries before the given index.
 			 */

@@ -44,8 +44,8 @@ namespace raftfs {
             void ResetNextIndex(int64_t new_index) { next_index = new_index; }
             int64_t GetNextIndex() const { return next_index;}
 
-            void SetMatchIndex(int64_t new_index) { match_index = new_index; }
-            int64_t GetMatchIndex() const { return match_index;}
+            //void SetMatchIndex(int64_t new_index) { match_index = new_index; }
+            //int64_t GetMatchIndex() const { return match_index;}
 
             bool Connected() {
                 if (sock->isOpen())
@@ -106,6 +106,9 @@ namespace raftfs {
 
             // for test
             void ChangeLeaderID(int32_t newid);
+
+            /* Check if all remote's index match current target index */
+            bool MatchRemoteIndex(int64_t new_index);
 
         private:
             int32_t  self_id;
