@@ -20,6 +20,8 @@ namespace raftfs {
 
             void Mkdir(protocol::MkdirResponse &_return, const protocol::MkdirRequest &new_dir) override;
 
+            void InjectTestCase(protocol::TestCaseResponse& _return, const protocol::TestCaseRequest& req) override;
+
         private:
             RaftConsensus& raft_state;
         };

@@ -24,6 +24,10 @@ namespace raftfs {
             raft_state.OnMetaOperation(MetaOp::kMkdir, new_dir.path, nullptr);
         }
 
-
+        void ClientRPCService::InjectTestCase(protocol::TestCaseResponse& _return, const protocol::TestCaseRequest& req) {
+            // TODO: call test case functions.
+        	cout << " Inject test case: " << req.test_type << endl;
+            //raft_state.OnMetaOperation(MetaOp::kMkdir, new_dir.path, nullptr);
+        }
     }
 }
