@@ -86,6 +86,8 @@ namespace raftfs {
             // Meta rpc handler
             protocol::Status::type OnMetaOperation(protocol::MetaOp::type op, std::string path, void* params);
 
+            protocol::Status::type OnInjectTestCase(int32_t type);
+
             int32_t GetLeader() const {return leader_id;}
         private:
 

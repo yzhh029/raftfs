@@ -440,6 +440,11 @@ namespace raftfs {
             leader_id = newid;
         }
 
+        protocol::Status::type RaftConsensus::OnInjectTestCase(int32_t type) {
+        	// TODO: handle test cases.
+        	return protocol::Status::kOK;
+        }
+
 
     }
 }
