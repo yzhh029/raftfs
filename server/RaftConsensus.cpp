@@ -125,12 +125,11 @@ namespace raftfs {
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
 
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
-                            << " L:" << leader_id << endl;
-
+                            << " L:" << leader_id << " I:" << ae_req.prev_log_index << endl;
                         // found one or more new log entry, add them to the request
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
-                            cout << id << " new entries prev:" << ae_req.prev_log_index  << endl;
+                            cout <<"r"<< id << " new entries prev:" << ae_req.prev_log_index  << endl;
                             // Copy new entries into request.
                             ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
                             // Print out new entries for information.
@@ -156,7 +155,7 @@ namespace raftfs {
 								if(ae_resp.success) {
 									//remote->SetMatchIndex(ae_req.entries.back().index);
 									// TODO: update log's last commit index.
-									remote->ResetNextIndex(log.GetLastLogIndex());
+									remote->ResetNextIndex(log.GetLastLogIndex() + 1);
 								}
                             }
 
@@ -256,6 +255,7 @@ namespace raftfs {
             int64_t next_index = log.GetLastLogIndex() + 1;
             for (auto &r : remotes) {
                 r.second->ResetNextIndex(next_index);
+                cout << r.second->GetNextIndex();
             }
 
             // notify all peer thread to send AE
