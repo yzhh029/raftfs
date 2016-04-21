@@ -294,51 +294,49 @@ namespace raftfs {
         void RaftConsensus::OnAppendEntries(protocol::AppendEntriesResponse &resp,
                                             const protocol::AppendEntriesRequest &req) {
             lock_guard<mutex> lock(m);
+
             bool success = true;
             resp.term = current_term;
-            // if sender has higher term, receiver catch up his term and change to follower
-            if (req.term > current_term) {
-                PostponeElection();
 
-                ChangeToFollower(req.term);
-                leader_id = req.leader_id;
-                cout << TimePointStr(Now()) <<" OnAE new leader (new term)" << leader_id << " RT:" << req.term << " change to follower" << endl;
-                //PostponeElection();
-            } else if (current_role == Role::kCandidate && req.term == current_term) {
-                // have a new leader
-                PostponeElection();
-
-                ChangeToFollower(req.term);
-                leader_id = req.leader_id;
-                cout << TimePointStr(Now()) <<" OnAE new leader" << leader_id << " RT:" << req.term << " change to follower" << endl;
-                resp.term = current_term;
-            } else if (current_term > req.term) {
-                // reject rpc
-                cout << TimePointStr((Now())) << " OnAE slow term reject" << endl;
+            // deal with term
+            // if receive an outdated term from caller, reject it and end function
+            if (current_term > req.term) {
                 success = false;
+                cout << TimePointStr((Now())) << " OnAE slow term reject" << endl;
+                return;
             } else {
-                // normal rpc from leader
-                //cout << TimePointStr(Now()) << " OnAE normal" << endl;
+                // receive a valid AE request from leader, postpone election timer first
                 PostponeElection();
+
+                // if sender has higher term, receiver catch up his term and change to follower
+                // Or failed to be the first leader in election term, change to follower
+                if (req.term > current_term
+                        || (current_role == Role::kCandidate && req.term >= current_term)) {
+                    cout << TimePointStr(Now()) <<" OnAE new leader" << leader_id << " RT:" << req.term << " change to follower" << endl;
+                    if (req.term > current_term) {
+                        resp.term = current_term;
+                    }
+                    ChangeToFollower(req.term);
+                    leader_id = req.leader_id;
+                }
             }
 
+            // after the term check, if we have a valid request, then preceed to operate on log entires
+            // leader.term >= local term
             if (success) {
+                // update leader id if not set
                 if (leader_id == -1) {
                     leader_id = req.leader_id;
                 }
 
                 // log operations
-                /* FIXME: double check here:
-                 * req.prev_log_term may have larger term if remote
-                 * has lost connection for a while */
-				#if(0)
-                if (log.GetLastLogTerm() == req.prev_log_term
-                        && log.GetLastLogIndex() >= req.prev_log_index) {          // log term check
+                if (log.GetLastLogIndex() >= req.prev_log_index) {          // log index check
+
                 } else {
                 	cout << "check here!!" << endl;
                     success = false;
                 }
-				#endif
+
                 // TODO log operations
                 /* Receiver implementation #3 and #4: -> All done by LogManager.
                  * #3: Delete existing entry if they conflict with leader.
@@ -380,6 +378,8 @@ namespace raftfs {
                     cout << TimePointStr(Now()) << " OnRV grant vote to " << req.candidate_id << " term:" << req.term << endl;
                     grant = true;
                     vote_for[req.term] = req.candidate_id;
+                    if (req.term == current_term)
+                        PostponeElection();
                 }
             }
             if (!grant) {

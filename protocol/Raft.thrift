@@ -40,6 +40,7 @@ struct AppendEntriesRequest {
 struct AppendEntriesResponse {
 1: required i64 term;
 2: required bool success;
+3: optional i64 last_log_index;
 }
 
 service RaftService {
