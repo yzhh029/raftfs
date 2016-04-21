@@ -10,7 +10,7 @@
 #define RAFTLOG_H_
 
 #include "../protocol/RaftService.h"
-//#include <memory>
+#include <memory>
 #include <vector>
 #include <deque>
 #include <mutex>

@@ -74,13 +74,65 @@ namespace raftfs {
          * #4: Append new entries not in the log
          *     --> One RPC can contain multiple entries...
          */
+        //
         bool LogManager::Append(const std::vector<Entry> * p_new_entries) {
             std::lock_guard<std::mutex> guard(m);
-            //
-            if(p_new_entries->empty())
-            	return false;
 
             // #4: Append new entries not in the log
+
+            // if the first entry's index is immediately after last local entry's index
+            // simply append all new log entries to the end of local log
+            if (p_new_entries->front().index == memory_log.back()->index + 1) {
+                Entry* copy = nullptr;
+                for (auto& e : *p_new_entries) {
+                    copy = new Entry(e);
+                    memory_log.push_back(copy);
+                }
+                return true;
+            }
+
+            // when the first new entry index < local last index
+            // find the first same entry in local log
+            auto first_same_it = find_if(memory_log.begin(), memory_log.end(),
+                                         [&p_new_entries](const Entry* e) {
+                                             return p_new_entries->front().index == e->index
+                                                    && p_new_entries->front().term == e->term;
+                                         });
+            // found the same entry in local log
+            if (first_same_it != memory_log.end()) {
+                cout << "found first same entry" << endl;
+                for (auto it = p_new_entries->begin(); it != p_new_entries->end(); ++it) {
+                    // need to overwrite local log entris
+                    if (first_same_it < memory_log.end()) {
+
+                        // if the index and term of two entires are same, then they have the same cmd
+                        if (it->index == (*first_same_it)->index && it->term == (*first_same_it)->term)
+                            continue;
+                        cout << " conflict entry local(" << (*first_same_it)->term << "," << (*first_same_it)->index
+                        << ") leader(" << it->term << "," << it->index << endl;
+
+                        // delete locol conflict log entry (*first_same_it)
+                        delete *first_same_it;
+                        *first_same_it = new Entry(*it);
+                        ++first_same_it;
+                    } else {
+                        // more new log
+                        Entry* copy = new Entry(*it);
+                        memory_log.push_back(copy);
+                    }
+                }
+                // delete extra conflict entries
+                if (first_same_it != memory_log.end())
+                    memory_log.erase(first_same_it, memory_log.end());
+
+                return true;
+            } else {
+                // not found first new entry in existing log
+
+                return false;
+            }
+
+            /*
             if (memory_log.empty() ||
                     (p_new_entries->front().term >= memory_log.back()->term
                      && p_new_entries->front().index > memory_log.back()->index
@@ -88,7 +140,7 @@ namespace raftfs {
                 ) {
             	// FIXME: Make a new copy of entries in request to
             	//        prevent request is deleted later after append
-            	for (auto ent: *(p_new_entries)) {
+            	for (auto& ent: *(p_new_entries)) {
             		Entry * ent_copy = new Entry(ent);
             		ent_copy->index = memory_log.size() + 1;
                     memory_log.push_back(ent_copy);
@@ -113,6 +165,7 @@ namespace raftfs {
             }
             // Some possible error path.
             return false;
+             */
         }
 
 

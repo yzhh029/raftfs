@@ -330,31 +330,24 @@ namespace raftfs {
                 }
 
                 // log operations
-                if (log.GetLastLogIndex() >= req.prev_log_index) {          // log index check
-
+                if (log.GetLastLogIndex() >= req.prev_log_index ) {          // log index check
+                    // try to append all new entires to local log
+                    if (!req.entries.empty()) {
+                        cout << TimePointStr(Now()) << " new entries from leader size:" << req.entries.size() << endl;
+                        success = log.Append(&req.entries);
+                    }
                 } else {
-                	cout << "check here!!" << endl;
+                    // if prev > last_index means there will be a gap in log
+                    // should not allow such operation
+                	cout << TimePointStr(Now()) << " forbid gap Local:" << log.GetLastLogIndex()
+                        << " Remote:" << req.prev_log_index << endl;
                     success = false;
                 }
-
-                // TODO log operations
-                /* Receiver implementation #3 and #4: -> All done by LogManager.
-                 * #3: Delete existing entry if they conflict with leader.
-                 * #4: Append new entries not in the log
-                 *     --> One RPC can contain multiple entries...
-                 */
-                log.Append(&req.entries);
-                // TODO: return Append success or not
-
-            }
-            if (success && leader_id == -1) {
-                leader_id = req.leader_id;
             }
 
-
-
-            // TODO: Add log append criteria if success state is changed.
             resp.success = success;
+            if (success)
+                resp.__set_last_log_index(log.GetLastLogIndex());
         }
 
         // Handle RPC: OnRequestVote

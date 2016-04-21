@@ -165,9 +165,16 @@ namespace raftfs {
             // a mapping from log entry id to a set of success append host id
             std::map<int64_t, std::set<int32_t>> pending_entries;
 
-
             std::mutex m;
+
+            // following thread will wait on this cv:
+            //      RemoteHostLoop
+            //      CheckLeaderLoop
             std::condition_variable new_event;
+
+            std::mutex cli_m;
+            // client rpc thread will wait on this cv
+            std::condition_variable client_ready;
         };
     }
 }
