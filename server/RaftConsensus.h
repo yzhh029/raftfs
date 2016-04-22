@@ -162,7 +162,7 @@ namespace raftfs {
              * need to be cleared at the beginning of election
              */
             //std::set<int32_t> log_append_status;
-            // a mapping from log entry id to a set of success append host id
+            // a mapping from log entry index to a set of success append host id
             std::map<int64_t, std::set<int32_t>> pending_entries;
 
             std::mutex m;

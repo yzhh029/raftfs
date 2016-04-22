@@ -5,6 +5,7 @@ enum Status {
     kOK,
     kNoLeader,
     kNotFound,
+    kTimeout,
     kExist
 }
 

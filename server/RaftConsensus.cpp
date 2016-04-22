@@ -7,6 +7,7 @@
 #include "../protocol/RaftService.h"
 #include <iostream>
 #include <random>
+#include <cassert>
 
 #include <transport/TSocket.h>
 #include <transport/TBufferTransports.h>
@@ -104,8 +105,6 @@ namespace raftfs {
             auto id = remote->GetID();
             cout << "rpc thread to " << name << " started" << endl;
 
-            //this_thread::sleep_for(chrono::seconds(1));
-
             auto rpc_client = remote->GetRPCClient();
             unique_lock<mutex> lock(m);
 
@@ -130,8 +129,8 @@ namespace raftfs {
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
                             cout <<"r"<< id << " new entries prev:" << ae_req.prev_log_index  << endl;
+
                             // Copy new entries into request.
-                            //ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
                             ae_req.__set_entries(log.GetEntriesStartAt(ae_req.prev_log_index));
                             // Print out new entries for information.
                             for (auto &e : ae_req.entries) {
@@ -147,26 +146,63 @@ namespace raftfs {
                             	 *   IN: ae_req;	OUT: ae_resp
                             	 */
                                 rpc_client->AppendEntries(ae_resp, ae_req);
-								// TODO: deal with response...Results: Term and Success.
-								cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
-								<< " S: " << ae_resp.success << endl;
 
-								// TODO: if success, reply commit to client.
-								// Need new var to
-								if(ae_resp.success) {
-									//remote->SetMatchIndex(ae_req.entries.back().index);
-									// TODO: update log's last commit index.
-									remote->ResetNextIndex(log.GetLastLogIndex() + 1);
-								}
                             }
 
                         } catch (transport::TTransportException te) {
-                            //cout << te.what() << endl;
                             cout << "lost communication to " << name << endl;
                             lock.lock();
                             break;
                         }
                         lock.lock();
+
+                        cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
+                        << " S: " << ae_resp.success << endl;
+                        // deal with response.
+
+                        if (ae_resp.term == current_term) {
+                            if (ae_resp.success) {
+                                if (!ae_req.entries.empty()) {
+                                    // append new entries success
+
+                                    // update remote next index
+                                    remote->ResetNextIndex(ae_resp.last_log_index + 1);
+
+                                    // for each new entry
+                                    auto commit_index = log.GetLastCommitIndex();
+                                    int64_t new_commit = commit_index;
+                                    for (auto& e : ae_req.entries ) {
+                                        // already commited
+                                        if (commit_index >= e.index)
+                                            continue;
+                                        // update quorum status
+                                        pending_entries[e.index].insert(id);
+                                        if (pending_entries[e.index].size() >= quorum_size) {
+                                            new_commit = e.index;
+                                        }
+                                    }
+                                    // update commit index
+                                    log.SetLastCommitIndex(new_commit);
+                                    cout << TimePointStr(Now()) << " new commit index:" << new_commit << endl;
+                                    client_ready.notify_all();
+
+                                } else {
+                                    // normal heartbeat response also goes here
+                                    // for now do nothing
+                                }
+                            } else {
+                                // if not success
+                            }
+                        } else if (ae_resp.term > current_term) {
+                            // if follower has higher term, change to follower
+                            // TODO: discard uncommited entires
+                            ChangeToFollower(ae_resp.term);
+                        }
+                        if(ae_resp.success) {
+                            // TODO: update log's last commit index.
+                            remote->ResetNextIndex(log.GetLastLogIndex() + 1);
+                        }
+                        //lock.lock();
                         break;
                     }
                     //-----------------------------------------------------
@@ -330,68 +366,39 @@ namespace raftfs {
                     leader_id = req.leader_id;
                 }
 
-                /*
                 // log operations
-                if (log.GetLastLogIndex() >= req.prev_log_index ) {          // log index check
+
+                // log index check:
+                //      if local last > leader prev, means have conflict entries
+                //      if local last == leader prev, no conflict
+                if (log.GetLastLogIndex() >= req.prev_log_index ) {
                     // try to append all new entires to local log
                     if (!req.entries.empty()) {
                         cout << TimePointStr(Now()) << " new entries from leader size:" << req.entries.size() << endl;
+                        for (auto& e : req.entries) {
+                            cout << "   I:" << e.index << " " << e.value << endl;
+                        }
                         success = log.Append(&req.entries);
+
+                        //debug
+                        if (success)
+                            cout << TimePointStr(Now()) << " append " << req.entries.size()
+                                << "entires SUCC LI:" << log.GetLastLogIndex() << endl;
+                        else
+                            cout << TimePointStr(Now()) << " append " << req.entries.size()
+                                    << "entires FAIL LI:" << log.GetLastLogIndex() << endl;
                     }
                 } else {
                     // if prev > last_index means there will be a gap in log
                     // should not allow such operation
                 	cout << TimePointStr(Now()) << " forbid gap Local:" << log.GetLastLogIndex()
                         << " Remote:" << req.prev_log_index << endl;
+
+                    // reject this request and report local last index
                     success = false;
+                    resp.__set_last_log_index(log.GetLastLogIndex());
                 }
-                */
-                //cout << req.entries.size() << endl;		// debug usage...
-                // log operations -- try to append all new entires to local log
-				if (!req.entries.empty()) {		// Seems this is the only new log criteria
-					/*
-					 * Non Empty log entry -- We must append !!
-					 * */
-					cout << TimePointStr(Now()) << " new entries from leader size:" << req.entries.size() << endl;
-					//
-	                if (log.GetLastLogIndex() > req.prev_log_index ) {          // log index check
-	                	cout << " Found uncommited entry to be deleted -- Local:" << log.GetLastLogIndex()
-							<< " Remote:" << req.prev_log_index << endl;
-
-	                } else { // if (log.GetLastLogIndex() < req.prev_log_index ) {          // server has newer entries
-	                    // if prev > last_index means a gap in log
-	                	// --> we may lost some RPC calls... Should allow to append...
-	                	cout << " New entry from server -- Local:" << log.GetLastLogIndex()
-	                        << " Remote:" << req.prev_log_index << endl;
-	                }
-	                // Append or Delete anyway
-	                success = log.Append(&req.entries);
-	                //cout << log.
-				} else {
-					/*
-					 * Empty log entry -- We have to compare log index!!
-					 * */
-	                if (log.GetLastLogIndex() > req.prev_log_index ) {          // log index check
-	                	cout << TimePointStr(Now()) << " Found uncommited entry to be deleted -- Local:" << log.GetLastLogIndex()
-							<< " Remote:" << req.prev_log_index << endl;
-	                	// TODO: We should delete and return success...
-	                	// FIXME: Add delete here!!
-	                } if (log.GetLastLogIndex() == req.prev_log_index ) {
-
-	                	// Do nothing
-
-	                } else { // if (log.GetLastLogIndex() < req.prev_log_index ) {          // server has newer entries
-	                    // if prev > last_index means a gap in log
-	                	// --> we may lost some RPC calls...
-	                	//     Should return false and ask server to resend entries...
-	                	cout << TimePointStr(Now()) << " forbid gap Local:" << log.GetLastLogIndex()
-	                        << " Remote:" << req.prev_log_index << endl;
-
-	                	resp.__set_last_log_index(log.GetLastLogIndex());	// let server know the gap
-	                    success = false;
-	                }
-				}
-				// !!! FIXME: We still have to compare req.leaderCommit !!
+				// TODO: update commit index and apply commited entries
             }
 
             resp.success = success;
@@ -453,26 +460,16 @@ namespace raftfs {
                 cout << TimePointStr(Now()) << "append new e" << e->term
                 		<< ":" << e->index << endl;
                 new_event.notify_all();	// notify remote servers
-                // TODO: wait majority to commit.
-                // 1. check commit index.
-                // 2. Add a one-sec timeout etc.
-                bool commited = false;
-                while(true) {
-                	this_thread::sleep_for(chrono::milliseconds(50));
-                	if( MatchRemoteIndex( log.GetLastLogIndex() ) ) {
-                		commited = true;
-                		break;
-                	}
-                	// TODO: timeout?
-                }
-                if(commited) {
-                	log.SetLastCommitIndex(log.GetLastLogIndex());
-                }
 
-                cout << TimePointStr(Now()) << "append new e" << e->term
-                		<< ":" << e->index << "-- Reached Majority" << endl;
-
-                return protocol::Status::kOK;
+                unique_lock<mutex> lock(cli_m);
+                if (client_ready.wait_for(lock, chrono::seconds(2), [&] {return e->index <= log.GetLastCommitIndex();})) {
+                    // success
+                    cout << TimePointStr(Now()) << e->index << "commited!" << endl;
+                    return protocol::Status::kOK;
+                } else {
+                    cout << TimePointStr(Now()) << e->index << "timeout!" << endl;
+                    return protocol::Status::kTimeout;
+                }
             }
         }
 

@@ -7,6 +7,7 @@
  */
 
 #include "LogManager.h"
+#include <iostream>
 #include <mutex>
 #include <algorithm>
 
@@ -78,22 +79,10 @@ namespace raftfs {
         bool LogManager::Append(const std::vector<Entry> * p_new_entries) {
             std::lock_guard<std::mutex> guard(m);
 
-            // #4: Append new entries not in the log
-
-            if (memory_log.empty()) {	// append everything if we are empty.
-                Entry* copy = nullptr;
-                for (auto& e : *p_new_entries) {
-                    copy = new Entry(e);
-                    memory_log.push_back(copy);
-                }
-            	return true;
-            }
-
-            cout << "app0\n";
-
-            // if the first entry's index is immediately after last local entry's index
+            // if local is a empty log
+            // or if the first entry's index is immediately after last local entry's index
             // simply append all new log entries to the end of local log
-            if (p_new_entries->front().index == memory_log.back()->index + 1) {
+            if (memory_log.empty() || p_new_entries->front().index == memory_log.back()->index + 1) {
                 Entry* copy = nullptr;
                 for (auto& e : *p_new_entries) {
                     copy = new Entry(e);
@@ -136,48 +125,11 @@ namespace raftfs {
                 // delete extra conflict entries
                 if (first_same_it != memory_log.end())
                     memory_log.erase(first_same_it, memory_log.end());
-
                 return true;
             } else {
                 // not found first new entry in existing log
-
                 return false;
             }
-
-            /*
-            if (memory_log.empty() ||
-                    (p_new_entries->front().term >= memory_log.back()->term
-                     && p_new_entries->front().index > memory_log.back()->index
-                    )
-                ) {
-            	// FIXME: Make a new copy of entries in request to
-            	//        prevent request is deleted later after append
-            	for (auto& ent: *(p_new_entries)) {
-            		Entry * ent_copy = new Entry(ent);
-            		ent_copy->index = memory_log.size() + 1;
-                    memory_log.push_back(ent_copy);
-            	}
-                return true;
-            } else {
-            	// #4
-            	int64_t existing_entry_at;
-            	existing_entry_at = GetEntryLoc(p_new_entries->front().index);
-            	if(existing_entry_at == -1) {
-            		// TODO: behavior needs to be dealt with...
-            	} else {
-            		// TODO: Need to check if we have deadlock inside...
-            		RemoveEntryAfter(existing_entry_at);
-            		for (auto ent: *(p_new_entries)) {
-						Entry * ent_copy = new Entry(ent);
-						ent_copy->index = memory_log.size() + 1;
-						memory_log.push_back(ent_copy);
-					}
-            	}
-            	return true;
-            }
-            // Some possible error path.
-            return false;
-             */
         }
 
 

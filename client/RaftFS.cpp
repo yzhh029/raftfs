@@ -9,6 +9,8 @@
 #include <protocol/TCompactProtocol.h>
 #include <protocol/TMultiplexedProtocol.h>
 
+#include <chrono>
+
 using namespace std;
 using namespace raftfs::protocol;
 using namespace apache::thrift::transport;
@@ -73,6 +75,8 @@ namespace raftfs {
 
 
     protocol::Status::type FSClient::Mkdir(std::string& path) {
+
+        auto start = chrono::system_clock::now();
         if (GetLeader() == -1) {
             return Status::kNoLeader;
         }
@@ -85,6 +89,9 @@ namespace raftfs {
         MkdirResponse resp;
         cout << leader_sock->getHost() << " " << hosts[leader_id - 1] << endl;
         leader_rpc->Mkdir(resp, req);
+
+        auto end = chrono::system_clock::now();
+        cout << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
         return resp.status;
     }
 
