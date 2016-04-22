@@ -124,7 +124,7 @@ namespace raftfs {
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
 
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
-                            << " L:" << leader_id << " I:" << ae_req.prev_log_index << endl;
+                            << " L:" << leader_id << " prev:" << ae_req.prev_log_index << endl;
                         // found one or more new log entry, add them to the request
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
@@ -134,7 +134,7 @@ namespace raftfs {
                             ae_req.__set_entries(log.GetEntriesStartAt(ae_req.prev_log_index));
                             // Print out new entries for information.
                             for (auto &e : ae_req.entries) {
-                                cout << id << "   " << e.index << " " << e.op << " " << e.value << endl;
+                                cout << id << "   I:" << e.index << " " << e.op << " " << e.value << endl;
                             }
                         }
                         lock.unlock();
@@ -164,7 +164,7 @@ namespace raftfs {
                             if (ae_resp.success) {
                                 if (!ae_req.entries.empty()) {
                                     // append new entries success
-
+                                    cout << "r" << id << "update last index " << ae_resp.last_log_index + 1 << endl;
                                     // update remote next index
                                     remote->ResetNextIndex(ae_resp.last_log_index + 1);
 
@@ -457,8 +457,8 @@ namespace raftfs {
                 e->term = current_term;
 
                 log.Append(e);	// Leader's log
-                cout << TimePointStr(Now()) << "append new e" << e->term
-                		<< ":" << e->index << endl;
+                cout << TimePointStr(Now()) << " append new e T:" << e->term
+                		<< " I:" << e->index << " LI:" << log.GetLastLogIndex()<< endl;
                 new_event.notify_all();	// notify remote servers
 
                 unique_lock<mutex> lock(cli_m);

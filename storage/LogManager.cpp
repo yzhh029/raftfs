@@ -91,7 +91,6 @@ namespace raftfs {
                 return true;
             }
 
-            cout << "app1\n";
             // when the first new entry index < local last index
             // find the first same entry in local log
             auto first_same_it = find_if(memory_log.begin(), memory_log.end(),
@@ -135,11 +134,12 @@ namespace raftfs {
 
         vector<LogManager::Entry> LogManager::GetEntriesStartAt(int64_t start_index) const {
 
-            auto it = lower_bound(memory_log.begin(), memory_log.end(), start_index, [](const Entry* lhs, int64_t index){ return lhs->index < index;});
-
+            auto it = lower_bound(memory_log.begin(), memory_log.end(), start_index, [](const Entry* lhs, int64_t index){ return lhs->index <= index;});
             vector<Entry> entries;
-            for (; it != memory_log.end() ; ++it)
+            for (; it != memory_log.end() ; ++it) {
+                //cout << "pack " << (*it)->index << endl;
                 entries.push_back(*(*it));
+            }
             return entries;
         }
 
