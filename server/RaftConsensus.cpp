@@ -279,7 +279,7 @@ namespace raftfs {
         	// TODO: check if we need a lock_guard here...
         	int32_t sync_hosts = 0;
         	for (auto &r : remotes) {
-        		if(r.second->GetNextIndex() >= new_index) {
+        		if((r.second->GetNextIndex()-1) >= new_index) {
         			sync_hosts++;
         		}
         	}
@@ -329,6 +329,7 @@ namespace raftfs {
                     leader_id = req.leader_id;
                 }
 
+                /*
                 // log operations
                 if (log.GetLastLogIndex() >= req.prev_log_index ) {          // log index check
                     // try to append all new entires to local log
@@ -343,6 +344,51 @@ namespace raftfs {
                         << " Remote:" << req.prev_log_index << endl;
                     success = false;
                 }
+                */
+                //cout << req.entries.size() << endl;		// debug usage...
+                // log operations -- try to append all new entires to local log
+				if (!req.entries.empty()) {		// Seems this is the only new log criteria
+					/*
+					 * Non Empty log entry -- We must append !!
+					 * */
+					cout << TimePointStr(Now()) << " new entries from leader size:" << req.entries.size() << endl;
+					//
+	                if (log.GetLastLogIndex() > req.prev_log_index ) {          // log index check
+	                	cout << " Found uncommited entry to be deleted -- Local:" << log.GetLastLogIndex()
+							<< " Remote:" << req.prev_log_index << endl;
+
+	                } else { // if (log.GetLastLogIndex() < req.prev_log_index ) {          // server has newer entries
+	                    // if prev > last_index means a gap in log
+	                	// --> we may lost some RPC calls... Should allow to append...
+	                	cout << " New entry from server -- Local:" << log.GetLastLogIndex()
+	                        << " Remote:" << req.prev_log_index << endl;
+	                }
+	                // Append or Delete anyway
+	                success = log.Append(&req.entries);
+	                //cout << log.
+				} else {
+					/*
+					 * Empty log entry -- We have to compare log index!!
+					 * */
+	                if (log.GetLastLogIndex() > req.prev_log_index ) {          // log index check
+	                	cout << TimePointStr(Now()) << " Found uncommited entry to be deleted -- Local:" << log.GetLastLogIndex()
+							<< " Remote:" << req.prev_log_index << endl;
+	                	// TODO: We should delete and return success...
+	                	// FIXME: Add delete here!!
+	                } if (log.GetLastLogIndex() == req.prev_log_index ) {
+
+	                	// Do nothing
+
+	                } else { // if (log.GetLastLogIndex() < req.prev_log_index ) {          // server has newer entries
+	                    // if prev > last_index means a gap in log
+	                	// --> we may lost some RPC calls...
+	                	//     Should return false and ask server to resend entries...
+	                	cout << TimePointStr(Now()) << " forbid gap Local:" << log.GetLastLogIndex()
+	                        << " Remote:" << req.prev_log_index << endl;
+	                    success = false;
+	                }
+				}
+				// !!! FIXME: We still have to compare req.leaderCommit !!
             }
 
             resp.success = success;

@@ -33,7 +33,7 @@ struct AppendEntriesRequest {
 2: required i32 leader_id;
 3: required i64 prev_log_index;
 4: required i64 prev_log_term;
-5: optional list<Entry> entries;
+5: required list<Entry> entries;
 6: required i64 leader_commit_index;
 }
 

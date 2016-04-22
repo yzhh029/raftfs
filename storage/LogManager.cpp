@@ -80,6 +80,17 @@ namespace raftfs {
 
             // #4: Append new entries not in the log
 
+            if (memory_log.empty()) {	// append everything if we are empty.
+                Entry* copy = nullptr;
+                for (auto& e : *p_new_entries) {
+                    copy = new Entry(e);
+                    memory_log.push_back(copy);
+                }
+            	return true;
+            }
+
+            cout << "app0\n";
+
             // if the first entry's index is immediately after last local entry's index
             // simply append all new log entries to the end of local log
             if (p_new_entries->front().index == memory_log.back()->index + 1) {
@@ -91,6 +102,7 @@ namespace raftfs {
                 return true;
             }
 
+            cout << "app1\n";
             // when the first new entry index < local last index
             // find the first same entry in local log
             auto first_same_it = find_if(memory_log.begin(), memory_log.end(),
