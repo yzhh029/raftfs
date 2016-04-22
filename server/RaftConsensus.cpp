@@ -131,7 +131,8 @@ namespace raftfs {
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
                             cout <<"r"<< id << " new entries prev:" << ae_req.prev_log_index  << endl;
                             // Copy new entries into request.
-                            ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
+                            //ae_req.entries = log.GetEntriesStartAt(ae_req.prev_log_index);
+                            ae_req.__set_entries(log.GetEntriesStartAt(ae_req.prev_log_index));
                             // Print out new entries for information.
                             for (auto &e : ae_req.entries) {
                                 cout << id << "   " << e.index << " " << e.op << " " << e.value << endl;
@@ -385,6 +386,8 @@ namespace raftfs {
 	                	//     Should return false and ask server to resend entries...
 	                	cout << TimePointStr(Now()) << " forbid gap Local:" << log.GetLastLogIndex()
 	                        << " Remote:" << req.prev_log_index << endl;
+
+	                	resp.__set_last_log_index(log.GetLastLogIndex());	// let server know the gap
 	                    success = false;
 	                }
 				}
