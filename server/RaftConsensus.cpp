@@ -202,13 +202,17 @@ namespace raftfs {
                                     // for now do nothing
                                 }
                             } else {
-                                // the reason of failed rpc is because the prev index is not sync with remote
-                                // reset next index for remote
+                                // the reason of failed rpc is because remote cannot find an entry that has
+                                // the same prev_index and prev_term
+                                // backoff the next_index
+                                // to reduce the rpc round to find sync entry, backoff 5 entries every time
                                 ae_resp.printTo(cout);
-                                if (ae_resp.__isset.last_log_index) {
-                                    cout << "need to sync next I to " << ae_resp.last_log_index + 1 << endl;
-                                    remote->ResetNextIndex(ae_resp.last_log_index + 1);
+                                if (ae_req.prev_log_index > 5) {
+                                    remote->ResetNextIndex(ae_req.prev_log_index - 5);
+                                } else {
+                                    remote->ResetNextIndex(1);
                                 }
+                                cout << "reset next index to" << remote->GetNextIndex() << endl;
                             }
                         } else if (ae_resp.term > current_term) {
                             // if follower has higher term, change to follower
@@ -368,7 +372,6 @@ namespace raftfs {
                 }
 
                 // log operations
-
                 // log index check:
                 //      if local last > leader prev, means have conflict entries
                 //      if local last == leader prev, no conflict

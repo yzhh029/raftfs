@@ -10,6 +10,7 @@
 #include <iostream>
 #include <mutex>
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
@@ -109,7 +110,7 @@ namespace raftfs {
                         if (it->index == (*first_same_it)->index && it->term == (*first_same_it)->term)
                             continue;
                         cout << " conflict entry local(" << (*first_same_it)->term << "," << (*first_same_it)->index
-                        << ") leader(" << it->term << "," << it->index << endl;
+                        << ") leader(" << it->term << "," << it->index << ")" << endl;
 
                         // delete locol conflict log entry (*first_same_it)
                         delete *first_same_it;
@@ -127,6 +128,7 @@ namespace raftfs {
                 return true;
             } else {
                 // not found first new entry in existing log
+                cout << "no same entry found, reject ae" << endl;
                 return false;
             }
         }
@@ -163,10 +165,10 @@ namespace raftfs {
 
         void LogManager::SetLastCommitIndex(int64_t new_index) {
             lock_guard<mutex> lock(m);
-            //if (memory_log.empty()) {
-            //    return 0;
-            //}
-            last_commited_index = new_index;
+            if (new_index <= memory_log.back()->index)
+                last_commited_index = new_index;
+            else
+                cout << " wrong commit index " << new_index << " LI:" << memory_log.back()->index << endl;
         }
 
 
@@ -217,9 +219,20 @@ namespace raftfs {
 
 
         std::ostream &operator<<(std::ostream &os, const LogManager &lm) {
+            cout << endl << "term : ";
             for (auto& e : lm.memory_log) {
-                cout << e->index << " ";
+                cout << setw(2) << e->term << " ";
             }
+
+            cout << endl << "index: ";
+            for (auto& e : lm.memory_log) {
+                cout << setw(2) << e->index << " ";
+            }
+            cout << endl << "value: ";
+            for (auto&e : lm.memory_log) {
+                cout << setw(2) << e->op << " ";
+            }
+            cout << endl;
             return os;
         }
 
