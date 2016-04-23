@@ -48,6 +48,12 @@ int main(int argc, char** argv) {
 
     cout << "test conflict append" << endl;
     vector<Entry> conflict;
+    Entry same;
+    same.term = 1;
+    same.index = 9;
+    same.op = randop();
+    conflict.push_back(same);
+    cout << same.index << ":" << same.op << " ";
     for (int i = 12; i <= 16; ++i) {
         Entry e;
         e.term = 2;

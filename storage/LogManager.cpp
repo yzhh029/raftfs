@@ -101,14 +101,16 @@ namespace raftfs {
                                          });
             // found the same entry in local log
             if (first_same_it != memory_log.end()) {
-                cout << "found first same entry" << endl;
+                cout << "found first same entry T:" << (*first_same_it)->term << " I:" << (*first_same_it)->index << endl;
                 for (auto it = p_new_entries->begin(); it != p_new_entries->end(); ++it) {
                     // need to overwrite local log entris
                     if (first_same_it < memory_log.end()) {
 
                         // if the index and term of two entires are same, then they have the same cmd
-                        if (it->index == (*first_same_it)->index && it->term == (*first_same_it)->term)
+                        if (it->index == (*first_same_it)->index && it->term == (*first_same_it)->term) {
+                            ++first_same_it;
                             continue;
+                        }
                         cout << " conflict entry local(" << (*first_same_it)->term << "," << (*first_same_it)->index
                         << ") leader(" << it->term << "," << it->index << ")" << endl;
 
@@ -123,8 +125,12 @@ namespace raftfs {
                     }
                 }
                 // delete extra conflict entries
-                if (first_same_it != memory_log.end())
+                if (first_same_it != memory_log.end()) {
+                    for (auto tmp_it = first_same_it; tmp_it != memory_log.end(); ++ tmp_it) {
+                        delete *tmp_it;
+                    }
                     memory_log.erase(first_same_it, memory_log.end());
+                }
                 return true;
             } else {
                 // not found first new entry in existing log
