@@ -176,11 +176,10 @@ namespace raftfs {
                                     // update remote next index
                                     remote->ResetNextIndex(ae_resp.last_log_index + 1);
 
-                                    // for each new entry
                                     auto commit_index = log.GetLastCommitIndex();
                                     int64_t new_commit = commit_index;
                                     for (auto& e : ae_req.entries ) {
-                                        // already commited
+                                        // skip commited entry
                                         if (commit_index >= e.index)
                                             continue;
                                         // update quorum status
@@ -196,7 +195,6 @@ namespace raftfs {
                                     log.SetLastCommitIndex(new_commit);
                                     cout << TimePointStr(Now()) << " new commit index:" << new_commit << endl;
                                     client_ready.notify_all();
-
                                 } else {
                                     // normal heartbeat response also goes here
                                     // for now do nothing
@@ -213,6 +211,8 @@ namespace raftfs {
                                     remote->ResetNextIndex(1);
                                 }
                                 cout << "reset next index to" << remote->GetNextIndex() << endl;
+                                // skip wait, do next round ae rpc immediately
+                                continue;
                             }
                         } else if (ae_resp.term > current_term) {
                             // if follower has higher term, change to follower
@@ -266,6 +266,7 @@ namespace raftfs {
                                 //  change to leader
                                 cout << TimePointStr(Now()) << " win leader election LT:" << current_term << endl;
                                 ChangeToLeader();
+                                continue;
                             }
                         }
                         break;
@@ -312,7 +313,7 @@ namespace raftfs {
             int64_t next_index = log.GetLastLogIndex() + 1;
             for (auto &r : remotes) {
                 r.second->ResetNextIndex(next_index);
-                cout << r.second->GetNextIndex();
+                //cout << r.second->GetNextIndex();
             }
 
             // notify all peer thread to send AE

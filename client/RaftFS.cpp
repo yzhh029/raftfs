@@ -24,7 +24,9 @@ namespace raftfs {
               hosts(opt.GetAllHosts()),
               leader_id(-1)
     {
-        ResetRPCClient(follower_rpc, follower_sock, hosts[rand() % hosts.size()]);
+        follower_id = rand() % hosts.size() + 1;
+        cout << " try to connect to " << follower_id << " " + hosts[follower_id - 1] << endl;
+        ResetRPCClient(follower_rpc, follower_sock, hosts[follower_id - 1]);
 
         cout << "ask " << follower_sock->getHost() << endl;
         // get current leader
@@ -47,9 +49,23 @@ namespace raftfs {
 
     int32_t FSClient::GetLeader() {
         if (leader_id == -1) {
-            if (follower_sock && !follower_sock->isOpen())
-                follower_sock->open();
+            int retry = 0;
+            while (follower_sock && !follower_sock->isOpen() && retry < hosts.size()) {
+                try {
+                    follower_sock->open();
+                } catch (TTransportException e) {
+                    ++retry;
+                    if (retry == hosts.size()) {
+                        cout << "no live server" << endl;
+                        exit(1);
+                    }
+                    follower_id = (follower_id + 1) % hosts.size() + 1;
+                    ResetRPCClient(follower_rpc, follower_sock, hosts[follower_id - 1]);
+                }
+            }
             protocol::GetLeaderResponse resp;
+
+            cout << " connected to " << follower_sock->getHost() << endl;
 
             follower_rpc->GetLeader(resp);
             if (resp.leader_id > 0 && resp.leader_id <= hosts.size()) {
@@ -113,7 +129,12 @@ namespace raftfs {
         );
 
         client.reset(new raftfs::protocol::ClientServiceClient(client_proto));
-        sock->open();
+        try {
+            sock->open();
+        } catch (TTransportException e) {
+            cout << "open connection to " << sock->getHost() << " failed" << endl;
+        }
+
     }
 
 

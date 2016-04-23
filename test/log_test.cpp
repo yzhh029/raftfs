@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     same.op = randop();
     conflict.push_back(same);
     cout << same.index << ":" << same.op << " ";
-    for (int i = 12; i <= 16; ++i) {
+    for (int i = 12; i <= 20; ++i) {
         Entry e;
         e.term = 2;
         e.index = i -2;

@@ -36,6 +36,7 @@ namespace raftfs {
     private:
         int port;
         int32_t leader_id;
+        int32_t follower_id;
         std::vector<std::string> hosts;
 
         boost::shared_ptr<THt::TSocket> leader_sock;
