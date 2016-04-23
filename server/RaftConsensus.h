@@ -109,9 +109,6 @@ namespace raftfs {
             // for test
             void ChangeLeaderID(int32_t newid);
 
-            /* Check if all remote's index match current target index */
-            bool MatchRemoteIndex(int64_t new_index);
-
         private:
             int32_t  self_id;
             std::string self_name;

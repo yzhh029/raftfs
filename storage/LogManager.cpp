@@ -216,6 +216,14 @@ namespace raftfs {
         }
 
 
+        std::ostream &operator<<(std::ostream &os, const LogManager &lm) {
+            for (auto& e : lm.memory_log) {
+                cout << e->index << " ";
+            }
+            return os;
+        }
+
+
 // TODO: Finish these function bodies.
         /*
 std::pair<uint64_t, uint64_t>  LogManager::append(

@@ -14,6 +14,7 @@
 #include <vector>
 #include <deque>
 #include <mutex>
+#include <iostream>
 
 
 namespace raftfs {
@@ -29,14 +30,11 @@ namespace raftfs {
 
             bool IsEmpty() const ;
             int64_t Size() const ;
+            void Print() const ;
 
 			/* Append Entry(s) and return whether append sucess.
 			 */
             bool Append(Entry * new_entry);
-
-            // Zhihao: when the follower got new entries in the requests,
-            // it will make a copy for each entry and store the pointers in the vector
-            // I suggest to change the element to pointer type
             bool Append(const std::vector<Entry> * new_entries);
 
 
@@ -77,6 +75,9 @@ namespace raftfs {
 
             int64_t last_commited_index;
         };
+
+
+        std::ostream& operator<<(std::ostream& os, const LogManager& lm);
     }
 }
 

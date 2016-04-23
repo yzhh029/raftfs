@@ -92,7 +92,11 @@ namespace raftfs {
                     PostponeElection();
                     new_event.notify_all();
                 }
-                new_event.wait_until(lock, next_election);
+
+                if (current_role != Role::kLeader)
+                    new_event.wait_until(lock, next_election);
+                else
+                    new_event.wait_until(lock, chrono::steady_clock::time_point::max());
             }
         }
 
@@ -111,7 +115,11 @@ namespace raftfs {
             while (!stop) {
                 //cout << "rpc "<< name << "wake up" << endl;
                 switch (current_role) {
-                	//-----------------------------------------------------
+                	/*
+                	 * When perform as leaeder, it will do two things:
+                	 * 1: sent empty append entries request to remote host as heartbeat
+                	 * 2: sent non-sync entries to remote to replicate log
+                	 */
                     case Role::kLeader: {
                         protocol::AppendEntriesRequest ae_req;
                         protocol::AppendEntriesResponse ae_resp;
@@ -181,6 +189,9 @@ namespace raftfs {
                                             new_commit = e.index;
                                         }
                                     }
+                                    // debug
+                                    cout << "log: " << log << endl;
+
                                     // update commit index
                                     log.SetLastCommitIndex(new_commit);
                                     cout << TimePointStr(Now()) << " new commit index:" << new_commit << endl;
@@ -191,21 +202,26 @@ namespace raftfs {
                                     // for now do nothing
                                 }
                             } else {
-                                // if not success
+                                // the reason of failed rpc is because the prev index is not sync with remote
+                                // reset next index for remote
+                                ae_resp.printTo(cout);
+                                if (ae_resp.__isset.last_log_index) {
+                                    cout << "need to sync next I to " << ae_resp.last_log_index + 1 << endl;
+                                    remote->ResetNextIndex(ae_resp.last_log_index + 1);
+                                }
                             }
                         } else if (ae_resp.term > current_term) {
                             // if follower has higher term, change to follower
                             // TODO: discard uncommited entires
                             ChangeToFollower(ae_resp.term);
                         }
-                        if(ae_resp.success) {
-                            // TODO: update log's last commit index.
-                            remote->ResetNextIndex(log.GetLastLogIndex() + 1);
-                        }
-                        //lock.lock();
+
                         break;
                     }
                     //-----------------------------------------------------
+                    /*
+                     * follwer never send rpc to anyone
+                     */
                     case Role::kFollower: {
 
 
@@ -307,24 +323,9 @@ namespace raftfs {
             current_role = Role::kFollower;
             current_term = new_term;
             leader_id = -1;
-        }
 
-        /* FIXME: We only check the index without content.
-         * Verify if we will have problem by doing so...
-         */
-        bool RaftConsensus::MatchRemoteIndex(int64_t new_index) {
-        	// TODO: check if we need a lock_guard here...
-        	int32_t sync_hosts = 0;
-        	for (auto &r : remotes) {
-        		if((r.second->GetNextIndex()-1) >= new_index) {
-        			sync_hosts++;
-        		}
-        	}
-        	if(sync_hosts >= quorum_size) {
-        		return true;
-        	} else {
-        		return false;
-        	}
+            PostponeElection();
+            new_event.notify_all();
         }
 
         // Handle RPC: AppendEntries()
@@ -349,7 +350,7 @@ namespace raftfs {
                 // Or failed to be the first leader in election term, change to follower
                 if (req.term > current_term
                         || (current_role == Role::kCandidate && req.term >= current_term)) {
-                    cout << TimePointStr(Now()) <<" OnAE new leader" << leader_id << " RT:" << req.term << " change to follower" << endl;
+                    cout << TimePointStr(Now()) <<" OnAE new leader" << req.leader_id << " RT:" << req.term << " change to follower" << endl;
                     if (req.term > current_term) {
                         resp.term = current_term;
                     }
@@ -400,6 +401,10 @@ namespace raftfs {
                 }
 				// TODO: update commit index and apply commited entries
             }
+
+            // debug output
+            if (!req.entries.empty())
+                cout << "log: " << log << endl;
 
             resp.success = success;
             if (success)
