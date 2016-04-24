@@ -18,7 +18,7 @@ using namespace std;
 namespace raftfs {
     namespace server {    // FIXME: put this under server first
 
-    	VirtualInode::VirtualInode(const char * name, int64_t mode)
+    	VirtualInode::VirtualInode(const char * new_name, int64_t mode)
                 : data(0), isOpen(false) {
     		treenodes.clear();
     		prop = mode;
@@ -31,7 +31,7 @@ namespace raftfs {
     			// Not assign mode, set as file...
     			prop |= VINODE_FILE;
     		}
-
+    		strcpy(this->name, new_name);
         }
 
     	VirtualInode::~VirtualInode() {
@@ -64,6 +64,10 @@ namespace raftfs {
 
         int64_t VirtualInode::GetMode() {
         	return prop;
+        }
+
+        std::vector<VirtualInode *> * VirtualInode::GetAllNodes() {
+        	return &treenodes;
         }
 
         bool VirtualInode::ChangeName(char * new_name) {

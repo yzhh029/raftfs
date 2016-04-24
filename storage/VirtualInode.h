@@ -46,6 +46,7 @@ namespace raftfs {
             const char * GetName() const;
             VirtualInode* GetChild(char * name) const;
             int64_t GetMode();
+            std::vector<VirtualInode *> * GetAllNodes();
 
             /**
              * Check if a child exists

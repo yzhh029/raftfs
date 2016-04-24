@@ -37,7 +37,8 @@ namespace raftfs {
             VirtualInode * GetDir(char * path);
             VirtualInode * GetFile(char * path);
 
-
+            void list();
+            void list_next_lvl(VirtualInode * inode, int lvl);
 
 			// Print a Log for debugging purposes.
 			friend std::ostream& operator<<(std::ostream& os, const VirtualFS& log);
@@ -53,6 +54,9 @@ namespace raftfs {
             VirtualInode root;
             VirtualInode * curdir;
             std::string curdir_str;
+
+            void output_space(int a);
+
         };
     }
 }

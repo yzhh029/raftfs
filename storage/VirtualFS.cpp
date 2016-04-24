@@ -54,21 +54,22 @@ namespace raftfs {
         	if(next_lvl.compare("") == 0)
         		continue;	// to prevent double layer "//"
 
-        	cout << "Next level: " << next_lvl << endl;
         	VirtualInode * nextdir = dir->ExistChildDir(next_lvl.c_str());
+        	cout << "Next level: " << next_lvl << " " << nextdir << endl;
         	if(nextdir != nullptr) {
         		dir = nextdir;
+        		//if(f.eof())	break;
         	}else{
         		error = true;
         		break;
         	}
         }
+
         if(error)	return false;
         this->curdir = dir;
         return true;
     }
 
-#if(1)
     bool VirtualFS::MakeDir(char * path) {
     	std::lock_guard<std::mutex> guard(m);
         VirtualInode * dir;
@@ -107,7 +108,7 @@ namespace raftfs {
         }
         return false;
     }
-#endif
+
 
     const char * VirtualFS::GetCurDir() const	{
     	// FIXME
@@ -115,6 +116,32 @@ namespace raftfs {
     		return root.GetName();
     	}else{
     		return this->curdir->GetName();
+    	}
+    }
+
+    /*
+     * Output formating functions
+     */
+    void VirtualFS::output_space(int a) {
+    	char spaces[256];
+    	memset(spaces, ' ', 255);
+    	spaces[255] = '\0';
+    	spaces[a*2] = '\0';
+    	cout << spaces;
+    }
+
+    void VirtualFS::list_next_lvl(VirtualInode * pnode, int lvl) {
+    	output_space(lvl);
+    	cout << pnode->GetName() << endl;
+    	for(auto p: *(pnode->GetAllNodes())) {
+    		list_next_lvl(p, lvl+1);
+    	}
+    }
+
+    void VirtualFS::list() {
+    	cout << root.GetName() << endl;
+    	for(auto p: *(root.GetAllNodes())) {
+    		list_next_lvl(p, 1);
     	}
     }
     std::ostream& operator<<(std::ostream& os, const VirtualFS& fs) {

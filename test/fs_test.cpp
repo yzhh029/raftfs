@@ -29,10 +29,13 @@ int main(int argc, char** argv) {
     cout << "cd / : " << fs.Chdir("/") << endl;
     cout << "mkdir /test1 : " << fs.MakeDir("/test1") << endl;
     cout << "mkdir /test2 : " << fs.MakeDir("test2") << endl;
+    fs.list();
     cout << "cd /test2 :" << fs.Chdir("test2") << endl;
     cout << "mkdir test3: " << fs.MakeDir("test3") << endl;
+    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4") << endl;
+    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5") << endl;
+    fs.list();
 
-    cout << "ls: " << fs << endl;
 
 #if(0)
 
