@@ -1,4 +1,6 @@
 
+include "Filesystem.thrift"
+
 namespace cpp raftfs.protocol
 
 enum Status {
@@ -20,6 +22,46 @@ struct MkdirRequest {
 
 struct MkdirResponse {
 1: required Status status;
+2: optional i32 leader_id;
+}
+
+struct CreateFileRequest {
+1: required string file_name;
+2: optional i32 mode;
+3: optional string client;
+}
+
+struct CreateFileResponse {
+1: required Status status;
+2: optional i32 leader_id;
+}
+
+struct DeleteRequest {
+1: required string path;
+2: optional bool recursive;
+}
+
+struct DeleteResponse {
+1: required Status status;
+2: optional i32 leader_id;
+}
+
+struct FileInfoRequest {
+1: required string file;
+}
+
+struct FileInfoResponse {
+1: required Status status;
+2: required Filesystem.FileInfo info;
+}
+
+struct ListDirRequest {
+1: required string dir;
+}
+
+struct ListDirResponse {
+1: required Status status;
+2: optional list<string> dir_list;
 }
 
 struct TestCaseRequest {
@@ -32,6 +74,10 @@ struct TestCaseResponse {
 
 service ClientService {
     GetLeaderResponse GetLeader();
-    MkdirResponse Mkdir(1:MkdirRequest new_dir)
-    TestCaseResponse InjectTestCase(1:TestCaseRequest req);
+    MkdirResponse Mkdir(1: MkdirRequest new_dir);
+    CreateFileResponse CreateFile(1: CreateFileRequest new_file);
+    DeleteResponse Delete(1: DeleteRequest path);
+    FileInfoResponse GetFileInfo(1: FileInfoRequest file);
+    ListDirResponse ListDir(1: ListDirRequest dir);
+    TestCaseResponse InjectTestCase(1: TestCaseRequest req);
 }

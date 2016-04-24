@@ -1,4 +1,6 @@
 
+include "Filesystem.thrift"
+
 namespace cpp raftfs.protocol
 
 enum MetaOp {

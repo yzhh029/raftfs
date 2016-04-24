@@ -381,14 +381,15 @@ namespace raftfs {
                     if (!req.entries.empty()) {
                         cout << TimePointStr(Now()) << " new entries from leader size:" << req.entries.size() << endl;
                         for (auto& e : req.entries) {
-                            cout << "   I:" << e.index << " " << e.value << endl;
+                            cout << "   I:" << e.index << " " << e.op << " " << e.value << endl;
                         }
                         success = log.Append(&req.entries);
 
                         //debug
-                        if (success)
+                        if (success) {
                             cout << TimePointStr(Now()) << " append " << req.entries.size()
-                                << "entires SUCC LI:" << log.GetLastLogIndex() << endl;
+                            << "entires SUCC LI:" << log.GetLastLogIndex() << endl;
+                        }
                         else
                             cout << TimePointStr(Now()) << " append " << req.entries.size()
                                     << "entires FAIL LI:" << log.GetLastLogIndex() << endl;
