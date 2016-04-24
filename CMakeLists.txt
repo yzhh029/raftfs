@@ -20,10 +20,13 @@ add_executable(raftfs server/server_main.cpp)
 add_executable(server_test test/server_test.cpp)
 add_executable(fsclient client/client_main.cpp)
 add_executable(log_test test/log_test.cpp)
+add_executable(fs_test test/fs_test.cpp)
 
 target_link_libraries(raftfs ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
 target_link_libraries(server_test ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
 target_link_libraries(log_test ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
+target_link_libraries(fs_test ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
+
 
 target_link_libraries(fsclient raftclient)
 #target_link_libraries(log_test ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} raftserver)
