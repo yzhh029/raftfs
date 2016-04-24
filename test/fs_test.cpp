@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string.h>
 
-using namespace raftfs::server;
+using namespace raftfs::filesystem;
 using namespace raftfs::protocol;
 using namespace std;
 

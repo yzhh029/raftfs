@@ -15,7 +15,7 @@
 using namespace std;
 
 namespace raftfs {
-    namespace server {    // FIXME: put this under server first
+    namespace filesystem {    // FIXME: put this under server first
 
     /******************************************************************
      *

@@ -18,7 +18,8 @@
 
 
 namespace raftfs {
-    namespace  server {		// FIXME: Temporary put this under server...
+    namespace filesystem {
+
         class VirtualFS {
 
         public:

@@ -16,7 +16,7 @@
 using namespace std;
 
 namespace raftfs {
-    namespace server {    // FIXME: put this under server first
+    namespace filesystem {
 
     	VirtualInode::VirtualInode(const char * new_name, int64_t mode)
                 : data(0), isOpen(false) {

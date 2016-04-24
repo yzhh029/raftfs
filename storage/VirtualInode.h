@@ -24,7 +24,7 @@
 #define VINODE_NAME_LEN		128
 
 namespace raftfs {
-    namespace  server {		// FIXME: Temporary put this under server...
+    namespace  filesystem {		// FIXME: Temporary put this under server...
 
         class VirtualInode {
 
