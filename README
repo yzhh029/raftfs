@@ -29,8 +29,10 @@
      - RaftRPCService.*  :  Def of RPC calls
     ------------------------------------------------------------------
     protocol/       :  Thrift's protocol def and generated files
-     - compileThrift.sh  :  Generate thrift lib with def file
-     - Raft.thrift       :  Raft definition file
+     - compileThrift.sh  :  Generate thrift lib with def files
+     - Raft.thrift       :  Server RPCs Raft definition
+     - Client.thrift     :  Client RPCs Raft definition
+     - Filesystem.thrift :  Filesystem related def.
      - *.cpp; *.h        :  Thrift generated files.
     ------------------------------------------------------------------
     test/           :  Unit tests and Performance tests
@@ -41,3 +43,8 @@
     ------------------------------------------------------------------
     storage/        :  Log / Storage related functions
      - LogManager.*         :  Memeory log functions.
+    ------------------------------------------------------------------
+    filesystem/     :  Namespace and Inode for file system
+     - FSNamespace.*     :  Namespace class and functions
+     - INode.*           :  INode definition for each file and dir.
+     
