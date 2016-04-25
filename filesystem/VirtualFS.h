@@ -14,7 +14,7 @@
 #include <mutex>
 #include <string>
 
-#include "VirtualInode.h"
+#include "INode.h"
 
 
 namespace raftfs {
@@ -35,11 +35,11 @@ namespace raftfs {
             const char * GetCurDir() const;
             bool Chdir(char * path);
             bool Move(char * old_path, char * new_path);
-            VirtualInode * GetDir(char * path);
-            VirtualInode * GetFile(char * path);
+            INode * GetDir(char * path);
+            INode * GetFile(char * path);
 
             void list();
-            void list_next_lvl(VirtualInode * inode, int lvl);
+            void list_next_lvl(INode * inode, int lvl);
 
 			// Print a Log for debugging purposes.
 			friend std::ostream& operator<<(std::ostream& os, const VirtualFS& log);
@@ -52,8 +52,8 @@ namespace raftfs {
 			// Data structures to entry storage
             mutable std::mutex m;
 
-            VirtualInode root;
-            VirtualInode * curdir;
+            INode root;
+            INode * curdir;
             std::string curdir_str;
 
             void output_space(int a);

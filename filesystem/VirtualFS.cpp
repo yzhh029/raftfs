@@ -36,7 +36,7 @@ namespace raftfs {
 
     bool VirtualFS::Chdir(char * path) {
     	std::lock_guard<std::mutex> guard(m);
-        VirtualInode * dir;
+        INode * dir;
     	if(path[0] == '/') {	// trace from root
     		dir = &root;
     		if(path[1] == '\0') {	// "cd /"
@@ -54,7 +54,7 @@ namespace raftfs {
         	if(next_lvl.compare("") == 0)
         		continue;	// to prevent double layer "//"
 
-        	VirtualInode * nextdir = dir->ExistChildDir(next_lvl.c_str());
+        	INode * nextdir = dir->ExistChildDir(next_lvl.c_str());
         	cout << "Next level: " << next_lvl << " " << nextdir << endl;
         	if(nextdir != nullptr) {
         		dir = nextdir;
@@ -72,7 +72,7 @@ namespace raftfs {
 
     bool VirtualFS::MakeDir(char * path) {
     	std::lock_guard<std::mutex> guard(m);
-        VirtualInode * dir;
+        INode * dir;
     	if(path[0] == '/') {	// trace from root
     		dir = &root;
     	} else {
@@ -86,7 +86,7 @@ namespace raftfs {
         	if(next_lvl.compare("") == 0)
         		continue;	// to prevent double layer "//"
 
-        	VirtualInode * nextdir = dir->ExistChildDir(next_lvl.c_str());
+        	INode * nextdir = dir->ExistChildDir(next_lvl.c_str());
         	//
         	if(f.eof())	{
         		//-- Reach final level -> Create if not exist
@@ -130,7 +130,7 @@ namespace raftfs {
     	cout << spaces;
     }
 
-    void VirtualFS::list_next_lvl(VirtualInode * pnode, int lvl) {
+    void VirtualFS::list_next_lvl(INode * pnode, int lvl) {
     	output_space(lvl);
     	cout << pnode->GetName() << endl;
     	for(auto p: *(pnode->GetAllNodes())) {
