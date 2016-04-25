@@ -113,6 +113,7 @@ namespace raftfs {
                 return false;
             }
 
+            protocol::FileInfo ToFileInfo() const;
 
         protected:
             int64_t size;

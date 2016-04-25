@@ -2,7 +2,7 @@
 // Created by huang630 on 4/23/16.
 //
 
-#include "../filesystem/VirtualFS.h"
+#include "../filesystem/FSNamespace.h"
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-    VirtualFS fs;
+    FSNamespace fs;
     char a[128] = "/a/b//c//d";
     char * pch;
 
@@ -26,14 +26,12 @@ int main(int argc, char** argv) {
     	cout << s << " rest: " << f.eof() << endl;
     }
 
-    cout << "cd / : " << fs.Chdir("/") << endl;
-    cout << "mkdir /test1 : " << fs.MakeDir("/test1") << endl;
-    cout << "mkdir /test2 : " << fs.MakeDir("test2") << endl;
+    cout << "mkdir /test1 : " << fs.MakeDir("/test1", <#initializer#>) << endl;
+    cout << "mkdir /test2 : " << fs.MakeDir("test2", <#initializer#>) << endl;
     fs.list();
-    cout << "cd /test2 :" << fs.Chdir("test2") << endl;
-    cout << "mkdir test3: " << fs.MakeDir("test3") << endl;
-    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4") << endl;
-    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5") << endl;
+    cout << "mkdir test3: " << fs.MakeDir("test3", <#initializer#>) << endl;
+    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", <#initializer#>) << endl;
+    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5", <#initializer#>) << endl;
     fs.list();
 
 

@@ -5,7 +5,7 @@
  *      Author: huang630
  */
 
-#include "VirtualFS.h"
+#include "FSNamespace.h"
 #include <iostream>
 #include <mutex>
 #include <algorithm>
@@ -13,9 +13,10 @@
 #include <sstream>
 
 using namespace std;
+using namespace raftfs::protocol;
 
 namespace raftfs {
-    namespace filesystem {    // FIXME: put this under server first
+    namespace filesystem {    
 
     /******************************************************************
      *
@@ -24,17 +25,17 @@ namespace raftfs {
      *
      *******************************************************************/
 
-    VirtualFS::VirtualFS() :
+    FSNamespace::FSNamespace() :
 		root("/", VINODE_DIR)	{
 
 
     }
 
-    VirtualFS::~VirtualFS() {
+    FSNamespace::~FSNamespace() {
     	// TODO: delete everything one by one.
     }
 
-    bool VirtualFS::Chdir(char * path) {
+    bool FSNamespace::Chdir(char * path) {
     	std::lock_guard<std::mutex> guard(m);
         INode * dir;
     	if(path[0] == '/') {	// trace from root
@@ -70,16 +71,16 @@ namespace raftfs {
         return true;
     }
 
-    bool VirtualFS::MakeDir(char * path) {
+    bool FSNamespace::MakeDir(const std::string &abs_dir, const std::string &owner) {
     	std::lock_guard<std::mutex> guard(m);
         INode * dir;
-    	if(path[0] == '/') {	// trace from root
+    	if(abs_dir[0] == '/') {	// trace from root
     		dir = &root;
     	} else {
     		dir = this->curdir;
     	}
     	//
-        istringstream f(path);
+        istringstream f(abs_dir);
         string next_lvl;
         //
         while (getline(f, next_lvl, '/')) {
@@ -110,7 +111,7 @@ namespace raftfs {
     }
 
 
-    const char * VirtualFS::GetCurDir() const	{
+    const char * FSNamespace::GetCurDir() const	{
     	// FIXME
     	if(curdir == &root) {
     		return root.GetName();
@@ -122,7 +123,7 @@ namespace raftfs {
     /*
      * Output formating functions
      */
-    void VirtualFS::output_space(int a) {
+    void FSNamespace::output_space(int a) {
     	char spaces[256];
     	memset(spaces, ' ', 255);
     	spaces[255] = '\0';
@@ -130,7 +131,7 @@ namespace raftfs {
     	cout << spaces;
     }
 
-    void VirtualFS::list_next_lvl(INode * pnode, int lvl) {
+    void FSNamespace::list_next_lvl(INode * pnode, int lvl) {
     	output_space(lvl);
     	cout << pnode->GetName() << endl;
     	for(auto p: *(pnode->GetAllNodes())) {
@@ -138,18 +139,18 @@ namespace raftfs {
     	}
     }
 
-    void VirtualFS::list() {
+    void FSNamespace::list() {
     	cout << root.GetName() << endl;
     	for(auto p: *(root.GetAllNodes())) {
     		list_next_lvl(p, 1);
     	}
     }
-    std::ostream& operator<<(std::ostream& os, const VirtualFS& fs) {
+    std::ostream& operator<<(std::ostream& os, const FSNamespace& fs) {
             	os << fs.GetCurDir();
     }
 
 #if(0)
-    VirtualFS::
+    FSNamespace::
     bool MakeDir(char * path);
     bool MakeFile(char * path);
     bool ExistDir(char * path);

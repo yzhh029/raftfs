@@ -57,6 +57,11 @@ namespace raftfs {
         }
 
 
+        protocol::FileInfo INodeFile::ToFileInfo() const {
+            return protocol::FileInfo();
+        }
+
+
         INode * INodeDirectory::GetChild(const std::string& child_name) const {
 			lock_guard<mutex> guard(m);
 			auto it = children_map.find(child_name);
@@ -89,22 +94,27 @@ namespace raftfs {
 
 
         std::vector<std::string> INodeDirectory::ListDirName() const {
+            // TODO
             return std::vector<std::string>();
         }
 
         std::vector<INode *> INodeDirectory::ListDirINode() const {
+            // todo
             return std::vector<INode *>();
         }
 
         bool INodeDirectory::CreateDir(std::string &dir_name) {
+            // todo
             return false;
         }
 
         bool INodeDirectory::AddDir(INodeDirectory &dir) {
+            // todo
             return false;
         }
 
         bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {
+            // todo
             return false;
         }
 
