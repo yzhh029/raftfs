@@ -36,7 +36,7 @@ namespace raftfs {
             using TimePoint = std::chrono::steady_clock::time_point;
 
             INode() = default;
-        	INode(const std::string &_name, const std::string &_owner, INode *_parent);
+        	INode(const std::string _name, const std::string _owner, INode *_parent);
             virtual ~INode();
 
             virtual bool IsFile() const = 0;
@@ -58,6 +58,7 @@ namespace raftfs {
             }
 
             INode* GetParent() const { return parent; }
+            void SetParent(INode* _p) { parent = _p;}
 
 			// Print a Log for debugging purposes.
 			friend std::ostream& operator<<(std::ostream& os, const INode& node);
@@ -96,8 +97,8 @@ namespace raftfs {
 		class INodeFile : public INode {
         public:
 
-            INodeFile(const std::string &_name, INode* _parent);
-            INodeFile(const std::string &_name, const std::string &_owner, INode *_parent);
+            INodeFile(const std::string _name, INode *_parent);
+            INodeFile(const std::string _name, const std::string _owner, INode *_parent);
 
             typedef int DataType;
 
@@ -124,8 +125,8 @@ namespace raftfs {
         class INodeDirectory : public INode {
         public:
 
-            INodeDirectory();
-
+            INodeDirectory() = default;
+            INodeDirectory(const std::string _name, const std::string _owner, INode * _parent);
             bool IsEmpty() const {
                 std::lock_guard<std::mutex> lock(m);
                 return children.empty();

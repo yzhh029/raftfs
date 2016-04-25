@@ -32,7 +32,7 @@ namespace raftfs {
              * i.e. start with "/"
              */
 
-            bool MakeDir(const std::string &abs_dir, const std::string &owner);
+            bool MakeDir(const std::string abs_dir, const std::string &owner, bool make_parents);
             bool DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive);
             bool CreateFile(const std::string &new_file, const std::string &owner);
             bool RemoveFile(const std::string &file_name, const std::string &visitor);

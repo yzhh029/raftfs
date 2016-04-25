@@ -26,13 +26,15 @@ int main(int argc, char** argv) {
     	cout << s << " rest: " << f.eof() << endl;
     }
 
-    cout << "mkdir /test1 : " << fs.MakeDir("/test1", <#initializer#>) << endl;
-    cout << "mkdir /test2 : " << fs.MakeDir("test2", <#initializer#>) << endl;
-    fs.list();
-    cout << "mkdir test3: " << fs.MakeDir("test3", <#initializer#>) << endl;
-    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", <#initializer#>) << endl;
-    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5", <#initializer#>) << endl;
-    fs.list();
+    string owner("fake");
+
+    cout << "mkdir /test1 : " << fs.MakeDir("/test1", owner, false) << endl;
+    cout << "mkdir /test2 : " << fs.MakeDir("test2", owner, false) << endl;
+    //fs.list();
+    cout << "mkdir test3: " << fs.MakeDir("test3", owner, false) << endl;
+    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", owner, false) << endl;
+    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5", owner, false) << endl;
+    //fs.list();
 
 
 #if(0)

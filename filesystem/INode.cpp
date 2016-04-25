@@ -19,7 +19,7 @@ using namespace std;
 namespace raftfs {
     namespace filesystem {
 
-        INode::INode(const std::string &_name, const std::string &_owner, INode *_parent)
+        INode::INode(const string _name, const string _owner, INode *_parent)
             : name(_name),
               owner(_owner),
               parent(_parent),
@@ -31,18 +31,19 @@ namespace raftfs {
         }
 
 
-        virtual INode::~INode() {
+        INode::~INode() {
 
         }
 
-		bool INode::ValideName(const std::string &name) {
+
+        bool INode::ValideName(const std::string &name) {
 			if (!name.empty() && name[0] == '/')
 				return true;
             return false;
 		}
 
 
-        INodeFile::INodeFile(const std::string &_name, const std::string &_owner, INode *_parent)
+        INodeFile::INodeFile(const string _name, const string _owner, INode *_parent)
             : INode(_name, _owner, _parent),
               size(0)
         {
@@ -50,7 +51,7 @@ namespace raftfs {
         }
 
 
-        INodeFile::INodeFile(const std::string &_name, INode *_parent)
+        INodeFile::INodeFile(const string _name, INode *_parent)
             :INode(_name, string(), _parent)
         {
 
@@ -59,6 +60,13 @@ namespace raftfs {
 
         protocol::FileInfo INodeFile::ToFileInfo() const {
             return protocol::FileInfo();
+        }
+
+
+        INodeDirectory::INodeDirectory(const std::string _name, const std::string _owner, INode *_parent)
+            : INode(_name, _owner, _parent)
+        {
+
         }
 
 
@@ -77,7 +85,7 @@ namespace raftfs {
                 return false;
 
         	lock_guard<mutex> guard(m);
-        	children.push_back(make_shared<INodeFile>(file_name, this);
+        	children.push_back(make_shared<INodeFile>(file_name, this));
             children_map[file_name] = children[children.size() - 1].get();
 
         	return true;
