@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     //client.CheckLeaders();
 
     string path("/test");
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 3; ++i) {
         string p = path + to_string(i);
         cout << "mkdir " << p << client.Mkdir(p) << endl;
 
