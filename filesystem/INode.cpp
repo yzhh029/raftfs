@@ -167,6 +167,27 @@ namespace raftfs {
 
         bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {
             // todo
+        	INode* target = GetChild(child_name);
+        	if(!target)	return false;
+
+    		if (target->IsFile()) {	// ignore recursive if IsFile
+    			delete target;
+    			children_map.erase(child_name);
+    			return true;
+    		} else {
+    			// IsDir
+            	if(recursive) {
+            		// TODO: check if crash
+
+            	} else {
+            		if( ((INodeDirectory*)target)->IsEmpty() ) {
+            			delete target;
+            			children_map.erase(child_name);
+            		}else {
+            			return false;
+            		}
+            	}
+    		}
             return false;
         }
 
