@@ -13,12 +13,19 @@
 #include <vector>
 #include <string.h>
 #include <cstddef>
+#include <sstream>
+
 
 using namespace std;
 
 namespace raftfs {
     namespace filesystem {
 
+    	/*====================================================
+    	 *  INode: Upper level abstract class
+    	 *  - Different behavior regarding file and dir should be defined
+    	 *    in lower layer INodeFile and INodeDirectory
+    	 *====================================================*/
         INode::INode(const string _name, const string _owner, INode *_parent)
             : name(_name),
               owner(_owner),
@@ -36,12 +43,32 @@ namespace raftfs {
         }
 
 
-        bool INode::ValideName(const std::string &name) {
-			if (!name.empty() && name[0] == '/')
+        bool INode::ValidName(const std::string &name) {
+			#if(0)
+        	if (!name.empty() && name[0] == '/')
 				return true;
-            return false;
+			#endif
+
+        	if (name[0] != '/')	return false;	// must contain '/'?
+
+			// The name should not contains special characters.
+			string error_list = ",><[]{}|~&^*()";
+			bool error = false;
+			for(int i=0; i<error_list.size(); ++i) {
+				if(name.find( error_list[i] ) != string::npos) {
+					error = true;
+					break;
+				}
+			}
+            return !error;
 		}
 
+
+    	/*====================================================
+    	 *
+    	 *  INodeFile: Final level class
+    	 *
+    	 *====================================================*/
 
         INodeFile::INodeFile(const string _name, const string _owner, INode *_parent)
             : INode(_name, _owner, _parent),
@@ -61,6 +88,13 @@ namespace raftfs {
         protocol::FileInfo INodeFile::ToFileInfo() const {
             return protocol::FileInfo();
         }
+
+
+    	/*====================================================
+    	 *
+    	 *  INodeDirectory: Final level class
+    	 *
+    	 *====================================================*/
 
 
         INodeDirectory::INodeDirectory(const std::string _name, const std::string _owner, INode *_parent)
@@ -96,8 +130,12 @@ namespace raftfs {
             if (!GetChild(file.GetName()))
                 return false;
 
-            // TODO not finished, need copy constructor
-
+            // TODO not finished, need copy constructor -- Need verificaation
+        	lock_guard<mutex> guard(m);
+        	/* Yes we need copy constructor...
+        	children.push_back(&file);
+        	children_map[file.GetName()] = children[children.size() - 1].get();
+        	*/
         }
 
 
@@ -112,12 +150,18 @@ namespace raftfs {
         }
 
         bool INodeDirectory::CreateDir(std::string &dir_name) {
-            // todo
+        	// don't allow two INodes have same name
+        	if(!GetChild(dir_name))
+                return false;
+
+        	lock_guard<mutex> guard(m);
+        	children.push_back(make_shared<INodeDirectory>(dir_name, this->GetOwner(), this));
+            children_map[dir_name] = children[children.size() - 1].get();
             return false;
         }
 
         bool INodeDirectory::AddDir(INodeDirectory &dir) {
-            // todo
+        	// TODO not finished, need copy constructor -- Need verificaation
             return false;
         }
 

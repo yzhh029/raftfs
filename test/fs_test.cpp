@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include "../filesystem/INode.h"
 
 using namespace raftfs::filesystem;
 using namespace raftfs::protocol;
@@ -18,6 +19,7 @@ int main(int argc, char** argv) {
     char a[128] = "/a/b//c//d";
     char * pch;
 
+    #if(0)  // string spilt test
     istringstream f(a);
     string s;
 
@@ -25,11 +27,16 @@ int main(int argc, char** argv) {
     	if(s.compare("") != 0)
     	cout << s << " rest: " << f.eof() << endl;
     }
+    #endif
 
     string owner("fake");
 
+    INodeFile t1("bad", owner, nullptr);
+    cout << t1.ValidName("/badname{") << endl;
+    cout << t1.ValidName("/goodfile") << endl;
+
     cout << "mkdir /test1 : " << fs.MakeDir("/test1", owner, false) << endl;
-    cout << "mkdir /test2 : " << fs.MakeDir("test2", owner, false) << endl;
+    cout << "mkdir /test2 : " << fs.MakeDir("/test2", owner, false) << endl;
     //fs.list();
     cout << "mkdir test3: " << fs.MakeDir("test3", owner, false) << endl;
     cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", owner, false) << endl;

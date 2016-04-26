@@ -92,6 +92,7 @@ namespace raftfs {
 
                 INode* nextdir = current->GetChild(next_lvl);
 
+                // TODO: now we make parents anyway... ignoring "make_parents"
                 if (!nextdir) {
                     //-- Reach final level -> Create if not exist
                     if (current->CreateDir(next_lvl)) {
@@ -104,6 +105,8 @@ namespace raftfs {
                     cout << "Next level: " << next_lvl << endl;
                     if (nextdir->IsDir()) {
                         current = static_cast<INodeDirectory *>(nextdir);
+                    }else{
+                    	return false;	// existing a file in the middle, not dir.
                     }
                 }
             }
@@ -116,6 +119,43 @@ namespace raftfs {
         }
 
         bool FSNamespace::CreateFile(const std::string &new_file, const std::string &owner) {
+            std::lock_guard<std::mutex> guard(m);
+            INodeDirectory* current = root.get();
+
+            // todo find other way to validate path
+            assert(new_file[0] == '/');
+
+            istringstream f(new_file);
+            string next_lvl;
+            //
+            while (!f.eof() && getline(f, next_lvl, '/')) {
+
+                if (next_lvl.empty())
+                    continue;
+
+                INode* nextdir = current->GetChild(next_lvl);
+
+                if (!nextdir) {
+                	if(f.eof()) {
+                        //-- Reach final level -> Create if not exist
+                        if (current->CreateFile(next_lvl)) {
+                        	return true;
+                        } else {
+                        	return false;	// existing file.
+                        }
+                    } else {
+                        return false;	// no middle dir.
+                    }
+                } else {
+                    //-- Advance to next level
+                    cout << "Next level: " << next_lvl << endl;
+                    if (nextdir->IsDir()) {
+                        current = static_cast<INodeDirectory *>(nextdir);
+                    }else{
+                    	return false;	// existing a file in the middle, not dir.
+                    }
+                }
+            }
             return false;
         }
 

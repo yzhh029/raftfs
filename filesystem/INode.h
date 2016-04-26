@@ -45,12 +45,13 @@ namespace raftfs {
 
             virtual bool IsRoot() const = 0;
 
-            static bool ValideName(const std::string& name);
+            static bool ValidName(const std::string& name);
 
             const std::string GetName() const { return name; }
+            const std::string GetOwner() const { return owner; }
 
             bool ChangeName(const std::string &new_name) {
-                if (ValideName(new_name)) {
+                if (ValidName(new_name)) {
                     name = new_name;
                     return true;
                 }
