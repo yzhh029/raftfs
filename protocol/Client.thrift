@@ -8,7 +8,8 @@ enum Status {
     kNoLeader,
     kNotFound,
     kTimeout,
-    kExist
+    kExist,
+    kCommError
 }
 
 struct GetLeaderResponse {
@@ -18,6 +19,7 @@ struct GetLeaderResponse {
 
 struct MkdirRequest {
 1: required string path;
+2: optional bool make_parents;
 }
 
 struct MkdirResponse {
@@ -28,7 +30,6 @@ struct MkdirResponse {
 struct CreateFileRequest {
 1: required string file_name;
 2: optional i32 mode;
-3: optional string client;
 }
 
 struct CreateFileResponse {

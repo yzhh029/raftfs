@@ -17,34 +17,48 @@
 namespace THt = apache::thrift::transport;
 
 namespace raftfs {
-    class FSClient {
-    public:
-        FSClient(Options& opt);
-        ~FSClient();
+    namespace client {
 
-        // only for test purpose
-        void CheckLeaders();
-        protocol::Status::type Mkdir(std::string& path);
+        typedef protocol::Status::type Status_;
 
-    private:
-        int32_t GetLeader();
-        void ResetSock(boost::shared_ptr<THt::TSocket>& sock, std::string host);
-        void ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient>& client,
-                            boost::shared_ptr<THt::TSocket>& sock,
-                            std::string host);
+        class FSClient {
+        public:
+            FSClient(Options &opt);
 
-    private:
-        int port;
-        int32_t leader_id;
-        int32_t follower_id;
-        std::vector<std::string> hosts;
+            ~FSClient();
 
-        boost::shared_ptr<THt::TSocket> leader_sock;
-        boost::shared_ptr<THt::TSocket> follower_sock;
-        std::shared_ptr<protocol::ClientServiceClient> leader_rpc;
-        std::shared_ptr<protocol::ClientServiceClient> follower_rpc;
+            // only for test purpose
+            void CheckLeaders();
 
-    };
+            Status_ Mkdir(const std::string &abs_dir);
+            Status_ ListDir(const std::string &abs_dir, std::vector<std::string> &dir_list);
+            Status_ GetFileInfo(const std::string &file_path, protocol::FileInfo &file_info);
+            Status_ CreateFile(const std::string &file_path);
+            Status_ Delete(const std::string &path);
+
+        private:
+            int32_t GetLeader();
+            bool ConnectFollower();
+
+            void ResetSock(boost::shared_ptr<THt::TSocket> &sock, std::string host);
+
+            bool ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient> &client,
+                                boost::shared_ptr<THt::TSocket> &sock,
+                                std::string host);
+
+        private:
+            int port;
+            int32_t leader_id;
+            int32_t follower_id;
+            std::vector<std::string> hosts;
+
+            boost::shared_ptr<THt::TSocket> leader_sock;
+            boost::shared_ptr<THt::TSocket> follower_sock;
+            std::shared_ptr<protocol::ClientServiceClient> leader_rpc;
+            std::shared_ptr<protocol::ClientServiceClient> follower_rpc;
+
+        };
+    }
 }
 
 #endif //RAFTFS_RAFTFS_H
