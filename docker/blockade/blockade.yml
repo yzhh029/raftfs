@@ -1,0 +1,23 @@
+containers:
+  c1:
+    image: fsrun
+    expose: [12345]
+    ports: {22222: 12345}
+    hostname: test1.cs.purdue.edu
+    links:
+      c2: c2
+      c3: c3
+
+  c2:
+    image: fsrun
+    expose: [12345]
+    ports: {22223: 12345}
+    hostname: test2.cs.purdue.edu
+    links:
+      c3: c3
+  c3:
+    image: fsrun
+    expose: [12345]
+    ports: {22224: 12345}
+    hostname: test3.cs.purdue.edu
+

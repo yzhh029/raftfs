@@ -27,11 +27,13 @@ namespace raftfs {
 
 
     std::string Options::GetSelfName() {
+
         if (self_name.empty()) {
             char name[1024];
             gethostname(name, 1024);
             self_name = string(name);
         }
+
         return self_name;
     }
 
