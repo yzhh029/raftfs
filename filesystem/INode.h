@@ -166,7 +166,7 @@ namespace raftfs {
 			 * Delete a child node.
 			 */
             bool DeleteChild(const std::string &child_name, bool recursive);
-
+            bool DeleteAllChild();	// default recursive...
 
 
         protected:

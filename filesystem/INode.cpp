@@ -171,13 +171,14 @@ namespace raftfs {
         	if(!target)	return false;
 
     		if (target->IsFile()) {	// ignore recursive if IsFile
-    			delete target;
+    			//delete target;
     			children_map.erase(child_name);
     			return true;
     		} else {
     			// IsDir
             	if(recursive) {
             		// TODO: check if crash
+
 
             	} else {
             		if( ((INodeDirectory*)target)->IsEmpty() ) {
@@ -191,6 +192,17 @@ namespace raftfs {
             return false;
         }
 
+        bool INodeDirectory::DeleteAllChild() {
+        	for(auto it: children) {
+        		if(it->IsFile()) {
+					it.reset();
+				} else {	// IsDir()
+					((INodeDirectory*)children_map[it->GetName()])->DeleteAllChild();
+					it.reset();
+				}
+        		children_map.erase(it->GetName());
+        	}
+        }
 
         std::ostream& operator<<(std::ostream& os, const INode& node) {
         	os << node.GetName();
