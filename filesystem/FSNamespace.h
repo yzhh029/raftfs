@@ -43,7 +43,7 @@ namespace raftfs {
             protocol::FileInfo GetFileInfo(const std::string &filename) const;
 
 			// Print a Log for debugging purposes.
-			friend std::ostream& operator<<(std::ostream& os, const FSNamespace& log);
+			friend std::ostream& operator<<(std::ostream& os, const FSNamespace& fs);
 
 			// Log is not copyable for safety.
 			FSNamespace(const FSNamespace&) = delete;

@@ -38,43 +38,6 @@ namespace raftfs {
             // TODO: delete everything one by one.
         }
 
-        /*
-        bool FSNamespace::Chdir(char * path) {
-            std::lock_guard<std::mutex> guard(m);
-            INode * dir;
-            if(path[0] == '/') {	// trace from root
-                dir = &root;
-                if(path[1] == '\0') {	// "cd /"
-                    this->curdir = &root;
-                    return true;
-                }
-            } else {
-                dir = this->curdir;
-            }
-            //
-            istringstream f(path);
-            string next_lvl;
-            bool error = false;
-            while (getline(f, next_lvl, '/')) {
-                if(next_lvl.compare("") == 0)
-                    continue;	// to prevent double layer "//"
-
-                INode * nextdir = dir->ExistChildDir(next_lvl.c_str());
-                cout << "Next level: " << next_lvl << " " << nextdir << endl;
-                if(nextdir != nullptr) {
-                    dir = nextdir;
-                    //if(f.eof())	break;
-                }else{
-                    error = true;
-                    break;
-                }
-            }
-
-            if(error)	return false;
-            this->curdir = dir;
-            return true;
-        }
-        */
         bool FSNamespace::MakeDir(const string abs_dir, const std::string &owner, bool make_parents) {
             std::lock_guard<std::mutex> guard(m);
             INodeDirectory* current = root.get();
@@ -194,7 +157,9 @@ namespace raftfs {
 
 
         std::ostream &operator<<(std::ostream &os, const FSNamespace &fs) {
+            auto curr = fs.root;
 
+            return os;
         }
 
     } // namespace raftfs::filesystem

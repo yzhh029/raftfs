@@ -117,6 +117,8 @@ namespace raftfs {
 
             protocol::FileInfo ToFileInfo() const;
 
+            friend std::ostream& operator<<(std::ostream& os, const INodeFile& node);
+
         protected:
             int64_t size;
             DataType data;
@@ -168,6 +170,7 @@ namespace raftfs {
             bool DeleteChild(const std::string &child_name, bool recursive);
             bool DeleteAllChild();	// default recursive...
 
+            friend std::ostream& operator<<(std::ostream& os, const INodeDirectory& node);
 
         protected:
             // files and subdirectories in this folder

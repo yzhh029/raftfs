@@ -7,90 +7,61 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include <memory>
 #include "../filesystem/INode.h"
 
 using namespace raftfs::filesystem;
 using namespace raftfs::protocol;
 using namespace std;
 
+void iNode_test() {
+    string owner("fakeowner");
+    string f1("file1");
+    string f2("file2");
+    shared_ptr<INode> f1_node = make_shared<INodeFile>(f1, nullptr);
+    cout << *f1_node << " " << f1_node->IsDir() << " "
+                            << f1_node->IsFile() << " " << f1_node->IsRoot() <<endl;
+
+    string dir1("dir1");
+
+    shared_ptr<INode> dir1_node = make_shared<INodeDirectory>(dir1, owner, nullptr);
+    cout << *dir1_node << " " << dir1_node->IsDir() << " "
+                        << dir1_node->IsFile() << " " << dir1_node->IsRoot() << endl;
+
+    shared_ptr<INodeDirectory> root = make_shared<INodeDirectory>(string(), "raftfs", nullptr);
+    root->SetParent(root.get());
+    cout << "root is root" << root->IsRoot() << endl;
+
+    // test INodeDirectory add file
+    auto dir1_ptr = static_pointer_cast<INodeDirectory>(dir1_node);
+    cout << *dir1_ptr << endl;
+    cout << dir1_ptr->CreateFile(f2) << endl;
+    cout << *dir1_ptr << endl;
+}
+
 int main(int argc, char** argv) {
+
+    iNode_test();
 
     FSNamespace fs;
     char a[128] = "/a/b//c//d";
     char * pch;
-
-    #if(0)  // string spilt test
-    istringstream f(a);
-    string s;
-
-    while (getline(f, s, '/')) {
-    	if(s.compare("") != 0)
-    	cout << s << " rest: " << f.eof() << endl;
-    }
-    #endif
 
     string owner("fake");
 
     //INodeFile t1("bad", owner, nullptr);
     //cout << t1.ValidName("/badname{") << endl;
     //cout << t1.ValidName("/goodfile") << endl;
-
+/*
     cout << "mkdir /test1 : " << fs.MakeDir("/test1", owner, false) << endl;
     cout << "mkdir /test2 : " << fs.MakeDir("/test2", owner, false) << endl;
     //fs.list();
     cout << "mkdir test3: " << fs.MakeDir("test3", owner, false) << endl;
     cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", owner, false) << endl;
     cout << "mkdir /null/test5" << fs.MakeDir("/null/test5", owner, false) << endl;
+    */
     //fs.list();
     //cout << "Delete all childe" << fs.DeleteAllChild();
-
-#if(0)
-
-    // test single append
-    cout << "test single append" << endl;
-    for (int i = 1; i <= 10; ++i) {
-        Entry* e = new Entry();
-        e->term = 1;
-        e->index = i;
-        e->op = randop();
-        log.Append(e);
-        cout << log;
-    }
-
-
-    cout << "test batch append" << endl;
-    vector<Entry> batch;
-    for (int i = 11; i <= 15; ++i) {
-        Entry e;
-        e.term = 1;
-        e.index = i;
-        e.op = randop();
-        batch.push_back(e);
-    }
-    cout << log.Append(&batch);
-    cout << log << endl;
-
-    cout << "test conflict append" << endl;
-    vector<Entry> conflict;
-    Entry same;
-    same.term = 1;
-    same.index = 9;
-    same.op = randop();
-    conflict.push_back(same);
-    cout << same.index << ":" << same.op << " ";
-    for (int i = 12; i <= 20; ++i) {
-        Entry e;
-        e.term = 2;
-        e.index = i -2;
-        e.op = randop();
-        cout << e.index << ":" << e.op << " ";
-        conflict.push_back(e);
-    }
-    cout << endl;
-    cout << log.Append(&conflict);
-    cout << log << endl;
-
-#endif
 
     return 0;
 

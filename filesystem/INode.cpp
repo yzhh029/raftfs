@@ -79,7 +79,7 @@ namespace raftfs {
 
 
         INodeFile::INodeFile(const string _name, INode *_parent)
-            :INode(_name, string(), _parent)
+            :INode(_name, string("unknown"), _parent)
         {
 
         }
@@ -115,8 +115,10 @@ namespace raftfs {
 
         bool INodeDirectory::CreateFile(const string &file_name) {
         	// don't allow two INodes have same name
-        	if(!GetChild(file_name))
+        	if(GetChild(file_name)) {
+                cout << file_name << " exist" << endl;
                 return false;
+            }
 
         	lock_guard<mutex> guard(m);
         	children.push_back(make_shared<INodeFile>(file_name, this));
@@ -127,7 +129,7 @@ namespace raftfs {
 
 
         bool INodeDirectory::AddFile(INodeFile &file) {
-            if (!GetChild(file.GetName()))
+            if (GetChild(file.GetName()))
                 return false;
 
             // TODO not finished, need copy constructor -- Need verificaation
@@ -206,7 +208,30 @@ namespace raftfs {
 
         std::ostream& operator<<(std::ostream& os, const INode& node) {
         	os << node.GetName();
+            return os;
         }
+
+
+        std::ostream& operator<<(std::ostream &os, const INodeFile &node) {
+            os << node.name << endl;
+
+            return os;
+        }
+
+        std::ostream& operator<<(std::ostream &os, const INodeDirectory &node) {
+            os << node.name << endl;
+            for (auto& n : node.children) {
+                if (n->IsFile())
+                    cout << "  ->" << *static_pointer_cast<INodeFile>(n) << endl;
+                else if (n->IsDir())
+                    cout << " |->" << *static_pointer_cast<INodeDirectory>(n) << endl;
+                else {
+                    cout << " WRONG " << *n << "is not file and not dir" << endl;
+                }
+            }
+            return os;
+        }
+
 
     } // namespace raftfs::server
 } // namespace raftfs
