@@ -22,7 +22,7 @@ void iNode_test() {
     cout << *f1_node << " " << f1_node->IsDir() << " "
                             << f1_node->IsFile() << " " << f1_node->IsRoot() <<endl;
 
-    string dir1("dir1");
+    string dir1("dir1"), dir2("dir2");
 
     shared_ptr<INode> dir1_node = make_shared<INodeDirectory>(dir1, owner, nullptr);
     cout << *dir1_node << " " << dir1_node->IsDir() << " "
@@ -36,6 +36,15 @@ void iNode_test() {
     auto dir1_ptr = static_pointer_cast<INodeDirectory>(dir1_node);
     cout << *dir1_ptr << endl;
     cout << dir1_ptr->CreateFile(f2) << endl;
+    cout << *dir1_ptr << endl;
+
+    cout << dir1_ptr->CreateDir(dir2) << endl;
+    cout << *dir1_ptr << endl;
+
+    auto d2 = static_cast<INodeDirectory *>(dir1_ptr->GetChild(dir2));
+    d2->CreateFile(f1);
+
+    cout << *d2 << endl;
     cout << *dir1_ptr << endl;
 }
 

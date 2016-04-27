@@ -37,6 +37,13 @@ namespace raftfs {
 
             INode() = default;
         	INode(const std::string _name, const std::string _owner, INode *_parent);
+
+            // copy constructor
+            INode(const INode& inode);
+            // assignment
+            INode& operator=(const INode& inode);
+
+
             virtual ~INode();
 
             virtual bool IsFile() const = 0;
@@ -69,7 +76,7 @@ namespace raftfs {
             std::string name;
             std::string owner;
 
-            const TimePoint create_time;
+            TimePoint create_time;
             TimePoint modification_time;
             TimePoint access_time;
 
@@ -100,6 +107,9 @@ namespace raftfs {
 
             INodeFile(const std::string _name, INode *_parent);
             INodeFile(const std::string _name, const std::string _owner, INode *_parent);
+
+            INodeFile(const INodeFile& iNodeFile);
+            INodeFile& operator=(const INodeFile& iNodeFile);
 
             typedef int DataType;
 

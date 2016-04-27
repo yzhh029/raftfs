@@ -38,11 +38,37 @@ namespace raftfs {
         }
 
 
+        INode::INode(const INode &inode)
+            : name(inode.name),
+              owner(inode.owner),
+              // two inodes with the same name cannot exist in the same folder
+              // parent need to set manully later
+              parent(nullptr),
+              create_time(inode.create_time),
+              modification_time(inode.modification_time),
+              access_time(inode.access_time)
+        {
+
+        }
+
+        INode &INode::operator=(const INode &inode) {
+            if (this != &inode) {
+                name = inode.name;
+                owner = inode.owner;
+                parent = nullptr;
+                create_time = inode.create_time;
+                modification_time = inode.modification_time;
+                access_time = inode.access_time;
+            }
+            return *this;
+        }
+
         INode::~INode() {
 
         }
 
-
+        // fixme: maybe do not need this function
+        // create another function like ValidPathName(path) in FSNamespace class
         bool INode::ValidName(const std::string &name) {
 			#if(0)
         	if (!name.empty() && name[0] == '/')
@@ -84,6 +110,23 @@ namespace raftfs {
 
         }
 
+
+        INodeFile::INodeFile(const INodeFile &iNodeFile)
+            : INode(iNodeFile),
+              size(iNodeFile.size),
+              data(iNodeFile.data)
+        {
+
+        }
+
+        INodeFile &INodeFile::operator=(const INodeFile &iNodeFile) {
+            if (this != &iNodeFile) {
+                INode::operator=(iNodeFile);
+                size = iNodeFile.size;
+                data = iNodeFile.data;
+            }
+            return *this;
+        }
 
         protocol::FileInfo INodeFile::ToFileInfo() const {
             return protocol::FileInfo();
@@ -153,13 +196,13 @@ namespace raftfs {
 
         bool INodeDirectory::CreateDir(std::string &dir_name) {
         	// don't allow two INodes have same name
-        	if(!GetChild(dir_name))
+        	if(GetChild(dir_name))
                 return false;
 
         	lock_guard<mutex> guard(m);
         	children.push_back(make_shared<INodeDirectory>(dir_name, this->GetOwner(), this));
             children_map[dir_name] = children[children.size() - 1].get();
-            return false;
+            return true;
         }
 
         bool INodeDirectory::AddDir(INodeDirectory &dir) {
@@ -213,7 +256,7 @@ namespace raftfs {
 
 
         std::ostream& operator<<(std::ostream &os, const INodeFile &node) {
-            os << node.name << endl;
+            os << node.name ;
 
             return os;
         }
