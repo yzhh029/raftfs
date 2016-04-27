@@ -5,4 +5,4 @@ cd build && $CMAKE ..
 echo $PWD
 ls -al
 make all
-make clean
+
