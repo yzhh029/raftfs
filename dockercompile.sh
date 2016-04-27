@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 cd ./protocol/ && ./compileThrift.sh
-cd ../ 
-$CMAKE .
+cd ../ && mkdir build
+cd build && $CMAKE ..
+echo $PWD
+ls -al
 make all
 

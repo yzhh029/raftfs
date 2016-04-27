@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace raftfs;
+using namespace raftfs::client;
 
 int main(int argc, char** argv) {
 
