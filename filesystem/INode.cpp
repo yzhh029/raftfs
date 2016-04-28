@@ -203,13 +203,24 @@ namespace raftfs {
 
 
         std::vector<std::string> INodeDirectory::ListDirName() const {
-            // TODO
-            return std::vector<std::string>();
+
+            vector<string> dir_lists;
+            dir_lists.reserve(children.size());
+            for (const auto& inode : children) {
+                dir_lists.push_back(inode->GetName());
+            }
+
+            return dir_lists;
         }
 
         std::vector<INode *> INodeDirectory::ListDirINode() const {
-            // todo
-            return std::vector<INode *>();
+
+            vector<INode *> dir_lists;
+            dir_lists.reserve(children.size());
+            for (const auto& inode : children) {
+                dir_lists.push_back(inode.get());
+            }
+            return dir_lists;
         }
 
         bool INodeDirectory::CreateDir(std::string &dir_name) {
