@@ -174,46 +174,29 @@ namespace raftfs {
                 return it->second;
         }
 
+
+
         bool INodeDirectory::CreateFile(const string &file_name) {
         	// don't allow two INodes have same name
         	if(GetChild(file_name)) {
-                cout << file_name << " exist" << endl;
                 return false;
             }
 
-        	lock_guard<mutex> guard(m);
-        	children.push_back(make_shared<INodeFile>(file_name, this));
-            children_map[file_name] = children.back().get();
-
+            INode* file = new INodeFile(file_name, this);
+            AddChild(file);
         	return true;
         }
 
 
         bool INodeDirectory::AddChild(INode *new_child) {
-            if(GetChild(new_child->GetName())) {
-                return false;
-            }
 
             lock_guard<mutex> guard(m);
             shared_ptr<INode> ptr;
             ptr.reset(new_child);
-            ptr->SetParent(this);
+            if (!ptr->GetParent() || ptr->GetParent() != this)
+                ptr->SetParent(this);
             children.push_back(ptr);
             children_map[ptr->GetName()] = children.back().get();
-
-            return true;
-        }
-
-
-        bool INodeDirectory::AddFile(INodeFile &file) {
-            if (GetChild(file.GetName()))
-                return false;
-
-            // TODO not finished, need copy constructor -- Need verificaation
-        	lock_guard<mutex> guard(m);
-            shared_ptr<INode> f = make_shared<INodeFile>(file);
-        	children.push_back(f);
-        	children_map[f->GetName()] = children.back().get();
 
             return true;
         }
@@ -234,15 +217,10 @@ namespace raftfs {
         	if(GetChild(dir_name))
                 return false;
 
-        	lock_guard<mutex> guard(m);
-        	children.push_back(make_shared<INodeDirectory>(dir_name, this->GetOwner(), this));
-            children_map[dir_name] = children[children.size() - 1].get();
-            return true;
-        }
+            INodeDirectory * dir = new INodeDirectory(dir_name, this);
+            AddChild(dir);
 
-        bool INodeDirectory::AddDir(INodeDirectory &dir) {
-        	// TODO not finished, need copy constructor -- Need verificaation
-            return false;
+            return true;
         }
 
         bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {

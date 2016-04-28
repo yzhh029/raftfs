@@ -153,9 +153,9 @@ namespace raftfs {
             virtual bool IsDir() const override {
                 return true;
             }
-            // only root can has empty name
+
             virtual bool IsRoot() const override {
-                return name.empty();
+                return name == "/";
             }
 
             std::vector<std::string> ListDirName() const;
@@ -176,9 +176,6 @@ namespace raftfs {
 
             // maybe use this function to replace the other two;
             bool AddChild(INode * new_child);
-
-            bool AddDir(INodeDirectory &dir);
-            bool AddFile(INodeFile &file);
 
             /**
 			 * Delete a child node.

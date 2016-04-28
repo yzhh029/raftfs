@@ -38,24 +38,29 @@ void iNode_test() {
     // test INodeDirectory add file
     auto dir1_ptr = static_pointer_cast<INodeDirectory>(dir1_node);
 
-    INode * f2ptr = new INodeFile(f2, nullptr);
-    cout << "add file2 " << dir1_ptr->AddChild(f2ptr) << endl;
+    cout << "add file2 " << dir1_ptr->CreateFile(f2) << endl;
     cout << *dir1_ptr << endl;
 
     // add directory
-    INode * dir2ptr = new INodeDirectory(dir2, nullptr);
-    cout << "add dir2 " << dir1_ptr->AddChild(dir2ptr) << endl;
+    cout << "add dir2 " << dir1_ptr->CreateDir(dir2) << endl;
     cout << *dir1_ptr << endl;
 
     // add same file again, should fail
-    cout << "add file2 again " << dir1_ptr->AddChild(f2ptr) << endl;
+    cout << "add file2 again " << dir1_ptr->CreateFile(f2) << endl;
     cout << *dir1_ptr << endl;
 
+
     FileInfo f2_info;
-    static_cast<INodeFile *>(f2ptr)->ToFileInfo(f2_info);
+
+    static_cast<INodeFile *>(dir1_ptr->GetChild(f2))->ToFileInfo(f2_info);
     cout << "file2 info " << f2_info.path << " " << f2_info.creator << " " << f2_info.create_time << endl;
     cout << chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
                                                            .time_since_epoch()).count() << endl;
+
+
+    cout << "get file2 " << dir1_ptr->GetChild(f2)->GetName() << endl;
+    cout << "get file1 " << dir1_ptr->GetChild(f1) << endl;
+    cout << "get dir2 " << dir1_ptr->GetChild(dir2)->GetName() << endl;
 
 
 }
