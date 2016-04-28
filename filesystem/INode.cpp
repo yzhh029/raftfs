@@ -196,6 +196,7 @@ namespace raftfs {
         	children.push_back(f);
         	children_map[f->GetName()] = children.back().get();
 
+            return true;
         }
 
 
@@ -262,6 +263,7 @@ namespace raftfs {
 				}
         		children_map.erase(it->GetName());
         	}
+            return true;
         }
 
         std::ostream& operator<<(std::ostream& os, const INode& node) {

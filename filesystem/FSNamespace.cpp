@@ -40,11 +40,7 @@ namespace raftfs {
 
 
         bool FSNamespace::ValidatePath(const std::string &path) {
-            if (path.empty() || path[0] != '/') {
-                return false;
-            }
-
-            return true;
+            return !path.empty() && path[0] == '/';
         }
 
 
@@ -111,11 +107,7 @@ namespace raftfs {
                 if (!nextdir) {
                 	if(f.eof()) {
                         //-- Reach final level -> Create if not exist
-                        if (current->CreateFile(next_lvl)) {
-                        	return true;
-                        } else {
-                        	return false;	// existing file.
-                        }
+                        return current->CreateFile(next_lvl)
                     } else {
                         return false;	// no middle dir.
                     }
