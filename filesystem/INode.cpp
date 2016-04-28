@@ -165,9 +165,24 @@ namespace raftfs {
 
         	lock_guard<mutex> guard(m);
         	children.push_back(make_shared<INodeFile>(file_name, this));
-            children_map[file_name] = children[children.size() - 1].get();
+            children_map[file_name] = children.back().get();
 
         	return true;
+        }
+
+
+        bool INodeDirectory::AddChild(INode *new_child) {
+            if(GetChild(new_child->GetName())) {
+                return false;
+            }
+
+            lock_guard<mutex> guard(m);
+            shared_ptr<INode> ptr;
+            ptr.reset(new_child);
+            children.push_back(ptr);
+            children_map[ptr->GetName()] = children.back().get();
+
+            return true;
         }
 
 
@@ -177,10 +192,10 @@ namespace raftfs {
 
             // TODO not finished, need copy constructor -- Need verificaation
         	lock_guard<mutex> guard(m);
-        	/* Yes we need copy constructor...
-        	children.push_back(&file);
-        	children_map[file.GetName()] = children[children.size() - 1].get();
-        	*/
+            shared_ptr<INode> f = make_shared<INodeFile>(file);
+        	children.push_back(f);
+        	children_map[f->GetName()] = children.back().get();
+
         }
 
 

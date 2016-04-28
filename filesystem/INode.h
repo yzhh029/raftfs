@@ -58,7 +58,7 @@ namespace raftfs {
             const std::string GetOwner() const { return owner; }
 
             bool ChangeName(const std::string &new_name) {
-                if (ValidName(new_name)) {
+                if (!new_name.empty()) {
                     name = new_name;
                     return true;
                 }
@@ -171,9 +171,14 @@ namespace raftfs {
              */
             // Currently use parent's mode / prop.
             bool CreateFile(const std::string &file_name);
-            bool AddFile(INodeFile &file);
             bool CreateDir(std::string &dir_name);
+
+            // maybe use this function to replace the other two;
+            bool AddChild(INode * new_child);
+
             bool AddDir(INodeDirectory &dir);
+            bool AddFile(INodeFile &file);
+
             /**
 			 * Delete a child node.
 			 */

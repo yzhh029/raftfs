@@ -31,6 +31,7 @@ namespace raftfs {
              * all abs_dir/file_name/new_file/abs_path should be absolute file path
              * i.e. start with "/"
              */
+			static bool ValidatePath(const std::string &path);
 
             bool MakeDir(const std::string abs_dir, const std::string &owner, bool make_parents);
             bool DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive);

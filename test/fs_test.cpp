@@ -41,6 +41,11 @@ void iNode_test() {
     cout << dir1_ptr->CreateDir(dir2) << endl;
     cout << *dir1_ptr << endl;
 
+    auto f1_file = *static_pointer_cast<INodeFile>(f1_node);
+
+    cout << dir1_ptr->AddFile(f1_file) << endl;
+    cout << *dir1_ptr << endl;
+
     auto d2 = static_cast<INodeDirectory *>(dir1_ptr->GetChild(dir2));
     d2->CreateFile(f1);
 

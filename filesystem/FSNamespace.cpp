@@ -38,6 +38,16 @@ namespace raftfs {
             // TODO: delete everything one by one.
         }
 
+
+        bool FSNamespace::ValidatePath(const std::string &path) {
+            if (path.empty() || path[0] != '/') {
+                return false;
+            }
+
+            return true;
+        }
+
+
         bool FSNamespace::MakeDir(const string abs_dir, const std::string &owner, bool make_parents) {
             std::lock_guard<std::mutex> guard(m);
             INodeDirectory* current = root.get();
