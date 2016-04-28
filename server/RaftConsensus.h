@@ -148,7 +148,7 @@ namespace raftfs {
              * time point to start a new election
              *
              */
-            std::chrono::steady_clock::time_point next_election;
+            std::chrono::system_clock::time_point next_election;
 
             /*
              * Handle log data structure / append operations -- Temporary in memory.

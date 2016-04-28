@@ -107,7 +107,7 @@ namespace raftfs {
                 if (!nextdir) {
                 	if(f.eof()) {
                         //-- Reach final level -> Create if not exist
-                        return current->CreateFile(next_lvl)
+                        return current->CreateFile(next_lvl);
                     } else {
                         return false;	// no middle dir.
                     }

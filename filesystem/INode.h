@@ -33,7 +33,7 @@ namespace raftfs {
 
         public:
 
-            using TimePoint = std::chrono::steady_clock::time_point;
+            using TimePoint = std::chrono::system_clock::time_point;
 
             INode() = default;
         	INode(const std::string _name, const std::string _owner, INode *_parent);
@@ -125,7 +125,7 @@ namespace raftfs {
                 return false;
             }
 
-            protocol::FileInfo ToFileInfo() const;
+            void ToFileInfo(protocol::FileInfo &info) const;
 
             friend std::ostream& operator<<(std::ostream& os, const INodeFile& node);
 
@@ -139,6 +139,7 @@ namespace raftfs {
         public:
 
             INodeDirectory() = default;
+            INodeDirectory(const std::string _name, INode* _parent);
             INodeDirectory(const std::string _name, const std::string _owner, INode * _parent);
             bool IsEmpty() const {
                 std::lock_guard<std::mutex> lock(m);

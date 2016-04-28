@@ -96,7 +96,7 @@ namespace raftfs {
                 if (current_role != Role::kLeader)
                     new_event.wait_until(lock, next_election);
                 else
-                    new_event.wait_until(lock, chrono::steady_clock::time_point::max());
+                    new_event.wait_until(lock, chrono::system_clock::time_point::max());
             }
         }
 

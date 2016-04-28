@@ -14,9 +14,12 @@
 #include <string.h>
 #include <cstddef>
 #include <sstream>
+#include <chrono>
 
 
 using namespace std;
+using namespace std::chrono;
+using namespace raftfs::protocol;
 
 namespace raftfs {
     namespace filesystem {
@@ -128,8 +131,17 @@ namespace raftfs {
             return *this;
         }
 
-        protocol::FileInfo INodeFile::ToFileInfo() const {
-            return protocol::FileInfo();
+        void INodeFile::ToFileInfo(protocol::FileInfo &info) const {
+
+            info.path = name;
+            auto p = parent;
+            while (p) {
+                info.path = p->GetName() + "/" + info.path;
+                p = p->GetParent();
+            }
+            info.create_time = duration_cast<seconds>(create_time.time_since_epoch()).count();
+            info.creator = owner;
+            info.size = size;
         }
 
 
@@ -142,6 +154,12 @@ namespace raftfs {
 
         INodeDirectory::INodeDirectory(const std::string _name, const std::string _owner, INode *_parent)
             : INode(_name, _owner, _parent)
+        {
+
+        }
+
+        INodeDirectory::INodeDirectory(const std::string _name, INode *_parent)
+            : INode(_name, string("unknown"), _parent)
         {
 
         }
@@ -179,6 +197,7 @@ namespace raftfs {
             lock_guard<mutex> guard(m);
             shared_ptr<INode> ptr;
             ptr.reset(new_child);
+            ptr->SetParent(this);
             children.push_back(ptr);
             children_map[ptr->GetName()] = children.back().get();
 

@@ -9,6 +9,8 @@
 #include <string.h>
 #include <memory>
 #include "../filesystem/INode.h"
+#include "../protocol/Filesystem_types.h"
+#include "../utils/time_utils.h"
 
 using namespace raftfs::filesystem;
 using namespace raftfs::protocol;
@@ -28,29 +30,34 @@ void iNode_test() {
     cout << *dir1_node << " " << dir1_node->IsDir() << " "
                         << dir1_node->IsFile() << " " << dir1_node->IsRoot() << endl;
 
+    // test root
     shared_ptr<INodeDirectory> root = make_shared<INodeDirectory>(string(), "raftfs", nullptr);
     root->SetParent(root.get());
     cout << "root is root" << root->IsRoot() << endl;
 
     // test INodeDirectory add file
     auto dir1_ptr = static_pointer_cast<INodeDirectory>(dir1_node);
-    cout << *dir1_ptr << endl;
-    cout << dir1_ptr->CreateFile(f2) << endl;
-    cout << *dir1_ptr << endl;
 
-    cout << dir1_ptr->CreateDir(dir2) << endl;
+    INode * f2ptr = new INodeFile(f2, nullptr);
+    cout << "add file2 " << dir1_ptr->AddChild(f2ptr) << endl;
     cout << *dir1_ptr << endl;
 
-    auto f1_file = *static_pointer_cast<INodeFile>(f1_node);
-
-    cout << dir1_ptr->AddFile(f1_file) << endl;
+    // add directory
+    INode * dir2ptr = new INodeDirectory(dir2, nullptr);
+    cout << "add dir2 " << dir1_ptr->AddChild(dir2ptr) << endl;
     cout << *dir1_ptr << endl;
 
-    auto d2 = static_cast<INodeDirectory *>(dir1_ptr->GetChild(dir2));
-    d2->CreateFile(f1);
-
-    cout << *d2 << endl;
+    // add same file again, should fail
+    cout << "add file2 again " << dir1_ptr->AddChild(f2ptr) << endl;
     cout << *dir1_ptr << endl;
+
+    FileInfo f2_info;
+    static_cast<INodeFile *>(f2ptr)->ToFileInfo(f2_info);
+    cout << "file2 info " << f2_info.path << " " << f2_info.creator << " " << f2_info.create_time << endl;
+    cout << chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+                                                           .time_since_epoch()).count() << endl;
+
+
 }
 
 int main(int argc, char** argv) {
