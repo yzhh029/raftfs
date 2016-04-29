@@ -27,11 +27,11 @@ namespace raftfs {
                 : cmd_executed(0)
                   //follower_id(rand() % hosts.size() + 1)
         {
-        	assert(test_through_client == nullptr);		// must be valid.
+        	assert(test_through_client != nullptr);		// must be valid.
 
         	// Open result file.
         	result_file.open(paras->filename, std::fstream::out);
-        	assert(!result_file.is_open());		// file can not be opened.
+        	assert(result_file.is_open());		// file can not be opened.
 
         	// Copy cmd_ratios
         	int acc = 0;
@@ -40,7 +40,7 @@ namespace raftfs {
         		cmd_cumulated_gate[i] = acc + paras->cmd_ratio[i];
         		acc += paras->cmd_ratio[i];
         	}
-        	assert(acc != 100);		// accumulated cmd ratio should be 100!
+        	assert(acc <= 100);		// accumulated cmd ratio should be 100!
         	// Maximum Filesystem / Metadata commands to be executed.
         	this->cmd_total_to_run = paras->max_cmds;
 
@@ -119,7 +119,8 @@ namespace raftfs {
         }
 
         void PerfTest::result_write_head() {
-        	result_file << "Hello World";
+        	//cout << "write file test" << endl;
+        	result_file << "Hello World" << endl;
         }
 
 #if(0)	// Functions in FSClient that we may need to overload...

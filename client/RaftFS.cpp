@@ -22,9 +22,11 @@ namespace raftfs {
         FSClient::FSClient(Options &opt)
                 : port(opt.GetPort()),
                   hosts(opt.GetAllHosts()),
-                  leader_id(-1),
-                  follower_id(rand() % hosts.size() + 1)
+                  leader_id(-1)
+                  //follower_id((rand() % hosts.size()) + 1)
         {
+        	std::srand(time(0));	// don't know why xinu11 has problem with this... follower_id is strange...
+        	follower_id = (rand() % hosts.size()) + 1;
             cout << " try to connect to " << follower_id << " " + hosts[follower_id - 1] << endl;
             ResetRPCClient(follower_rpc, follower_sock, hosts[follower_id - 1]);
 

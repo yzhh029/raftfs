@@ -18,6 +18,7 @@ using namespace raftfs::client;
 int main(int argc, char** argv) {
 
     Options opt(argc, argv);
+    cout << "tt" << endl;
     FSClient client(opt);
 
     //client.CheckLeaders();
@@ -46,6 +47,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
     para.cmd_ratio[pcmd_type::perf_listdir] = 25;
     para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;
     PerfTest ptest1(&client, &para);
+    ptest1.result_write_head();
 #endif
 
     return 0;
