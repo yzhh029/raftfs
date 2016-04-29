@@ -184,6 +184,8 @@ namespace raftfs {
             bool DeleteChild(const std::string &child_name, bool recursive);
             bool DeleteAllChild();	// default recursive...
 
+            void Print(int level) const;
+
             friend std::ostream& operator<<(std::ostream& os, const INodeDirectory& node);
 
         protected:

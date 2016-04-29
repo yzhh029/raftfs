@@ -47,6 +47,14 @@ namespace raftfs {
         }
 
 
+        std::vector<std::string> FSNamespace::SplitPath(string abs_path) {
+            vector<string> dir_split;
+            boost::split(dir_split, abs_path, boost::is_any_of("/"));
+            dir_split.erase(dir_split.begin());
+            return dir_split;
+        }
+
+
         bool FSNamespace::MakeDir(const string abs_dir, const std::string &owner, bool make_parents) {
             std::lock_guard<std::mutex> guard(m);
             INodeDirectory* current = root.get();
@@ -54,19 +62,19 @@ namespace raftfs {
             // todo find other way to validate path
             assert(abs_dir[0] == '/');
 
-            vector<string> dir_split;
-            boost::split(dir_split, abs_dir, boost::is_any_of("/"));
+            auto dir_split = SplitPath(abs_dir);
 
             int new_dir = 0, i;
 
             for (i = 0; i < dir_split.size(); ++i) {
                 // dir exist
+                cout << "sub path " << dir_split[i] << endl;
                 auto sub = current->GetChild(dir_split[i]);
                 if (sub) {
                     current = static_cast<INodeDirectory *>(sub);
                 } else {
                     // missing middle level
-
+                    cout << "missing " << dir_split[i] << endl;
                     if (i!= dir_split.size() - 1) {
                         // remember the index of the first missing level
                         if (!new_dir)
@@ -105,6 +113,24 @@ namespace raftfs {
 
 
         bool FSNamespace::DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive) {
+
+            auto current = root.get();
+            auto dir_split = SplitPath(abs_dir);
+
+            for (int i = 0 ; i < dir_split.size() - 1; ++i) {
+                auto sub_ptr = current->GetChild(dir_split[i]);
+                if (sub_ptr) {
+                    current = static_cast<INodeDirectory *>(sub_ptr);
+                } else {
+                    break;
+                }
+            }
+            // found the parent of last dir
+            if (current->GetName() == dir_split[dir_split.size()-2] &&
+                    current->GetChild(dir_split[dir_split.size()-1])->GetOwner() == visitor) {
+                return current->DeleteChild(dir_split[dir_split.size()-2], recursive);
+            }
+
             return false;
         }
 
@@ -164,6 +190,11 @@ namespace raftfs {
 
         protocol::FileInfo FSNamespace::GetFileInfo(const std::string &filename) const {
             return protocol::FileInfo();
+        }
+
+
+        void FSNamespace::Print() const {
+            root->Print(1);
         }
 
 

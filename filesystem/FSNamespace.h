@@ -45,12 +45,16 @@ namespace raftfs {
 
 			// Print a Log for debugging purposes.
 			friend std::ostream& operator<<(std::ostream& os, const FSNamespace& fs);
+            void Print() const;
 
 			// Log is not copyable for safety.
 			FSNamespace(const FSNamespace&) = delete;
 			FSNamespace& operator=(const FSNamespace&) = delete;
 
         private:
+
+            std::vector<std::string> SplitPath(std::string abs_path);
+
 			// Data structures to entry storage
             mutable std::mutex m;
 
