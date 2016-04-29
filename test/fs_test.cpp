@@ -83,6 +83,12 @@ void fs_test() {
 
     cout << " try mkdir /abc/def should 0 " << fs.MakeDir("/abc/def", owner, false) << endl;
     cout << " try mkdir /abc/def should 1 " << fs.MakeDir("/abc/def", owner, true) << endl;
+    fs.Print();
+
+    cout << " try mkdir /abc/def/ghk should 1 " << fs.MakeDir("/abc/def/ghk", owner, false) << endl;
+    fs.Print();
+
+    cout << " try rmdir /abc/def should 0 " << fs.DeleteDir("/abc/def", owner, false) << endl;
 }
 
 int main(int argc, char** argv) {
