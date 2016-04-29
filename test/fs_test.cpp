@@ -97,6 +97,20 @@ void fs_test() {
     fs.Print();
     cout << " try create file /flaskdfj/asldkfj should 0 " << fs.CreateFile("/flaskdfj/asldkfj", owner) << endl;
     fs.Print();
+
+    cout << " list root " << endl;
+    auto dir_list = fs.ListDir("/");
+    for (auto& inode: dir_list) {
+        cout << inode << endl;
+    }
+
+    FileInfo info;
+    cout << " get fileinfo /abc/abc " << fs.GetFileInfo("/abc/abc", info) << endl;
+    cout << info.path << " " << info.size << " " << info.creator << " " << info.create_time << endl;
+
+    cout << " try delete file /flaskdfj/asldkfj shoud 0 " << fs.RemoveFile("/flaskdfj/asldkfj", owner) << endl;
+    cout << " try delete file /abc/abc shoud 1 " << fs.RemoveFile("/abc/abc", owner) << endl;
+    fs.Print();
 }
 
 int main(int argc, char** argv) {

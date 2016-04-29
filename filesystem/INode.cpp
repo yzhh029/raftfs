@@ -137,8 +137,14 @@ namespace raftfs {
             info.path = name;
             auto p = parent;
             while (p) {
-                info.path = p->GetName() + "/" + info.path;
+                if (!p->IsRoot()) {
+                    info.path = p->GetName() + "/" + info.path;
+                } else {
+                    info.path = p->GetName() +  info.path;
+                    break;
+                }
                 p = p->GetParent();
+
             }
             info.create_time = duration_cast<seconds>(create_time.time_since_epoch()).count();
             info.creator = owner;
