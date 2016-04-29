@@ -6,10 +6,13 @@
 
 #include "PerfTest.h"
 #include <vector>
-#include <chrono>
-#include "RaftFS.h"
 #include <fstream>
+#include <iomanip>      // std::put_time
+#include <ctime>        // std::time_t, struct std::tm, std::localtime
+#include <chrono>       // std::chrono::system_clock
+#include "RaftFS.h"
 
+using namespace std::chrono;
 using namespace raftfs::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift;
@@ -120,7 +123,12 @@ namespace raftfs {
 
         void PerfTest::result_write_head() {
         	//cout << "write file test" << endl;
-        	result_file << "Hello World" << endl;
+
+        	std::chrono::system_clock::time_point p = system_clock::now();
+        	std::time_t t = system_clock::to_time_t(p);
+        	result_file << "Test on: "
+        		<< std::ctime(&t)
+        	 	<< endl;
         }
 
 #if(0)	// Functions in FSClient that we may need to overload...
