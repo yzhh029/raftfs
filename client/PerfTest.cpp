@@ -27,10 +27,11 @@ namespace raftfs {
     namespace client {
         PerfTest::PerfTest(FSClient * test_through_client,
         			PerfTest::PerfTestParameters * paras)
-                : cmd_executed(0)
+                : cmd_executed(0), client(nullptr)
                   //follower_id(rand() % hosts.size() + 1)
         {
         	assert(test_through_client != nullptr);		// must be valid.
+        	client = test_through_client;
 
         	// Open result file.
         	result_file.open(paras->filename, std::fstream::out);
@@ -73,6 +74,19 @@ namespace raftfs {
         		test_tree.push_back(file11);
         		test_tree.push_back(file12);
         		test_tree.push_back(file13);
+        		//
+        		PerfTestNode* dir2 = new PerfTestNode(nullptr, "/dir2");
+        		test_tree.push_back(dir2);
+        		PerfTestNode* dir21 = new PerfTestNode(dir2, "/dir1/dir21");
+        		PerfTestNode* dir22 = new PerfTestNode(dir2, "/dir1/dir22");
+        		PerfTestNode* dir23 = new PerfTestNode(dir2, "/dir1/dir23");
+        		test_tree.push_back(dir21);
+        		test_tree.push_back(dir22);
+        		test_tree.push_back(dir23);
+        		//
+        		PerfTestNode* dir3 = new PerfTestNode(nullptr, "/dir2");
+        		test_tree.push_back(dir3);
+        		//PerfTestNode* dir4 = new PerfTestNode(dir2, "/dir2");
         	}
         		break;
         	default:
@@ -90,6 +104,9 @@ namespace raftfs {
         	int next_cmd, tmp;
         	std::vector<std::string> tmp_dir_list;
         	FileInfo tmp_file_info;
+        	int test_node_index = 0;
+
+        	cout << "Perf Test Begin: " << endl;
 
         	while(cmd_executed < cmd_total_to_run) {
         		//----------------------------------------------
@@ -101,7 +118,7 @@ namespace raftfs {
         				break;
         			}
         		}
-
+        		//PerfTestNode * pNode = test_tree[test_node_index % test_tree.size()];
         		PerfTestNode tmp_node(nullptr, "/dir1");		// TODO: get from array / vector
         		Status_ rtn = Status_::kOK;
         		//----------------------------------------------
@@ -114,6 +131,12 @@ namespace raftfs {
         	    kExist = 4,
         	    kCommError = 5
         	    */
+        		/*
+        		cout << "cmd: " << next_cmd << " name: " <<
+        				tmp_node.fullname << " client " << client << endl;
+        		client->Mkdir(tmp_node.fullname);
+        		cout << "cmd: " << next_cmd << " client " << client << endl;
+        		*/
         		// FIXME: Assume we send to leader first via FSClient interface.
         		switch(next_cmd) {
         		case perf_mkdir:
@@ -141,8 +164,9 @@ namespace raftfs {
                 	break;
         		}
 
-
+        		// Preparation for next round.
         		cmd_executed++;
+        		test_node_index++;
         	}
         }
 

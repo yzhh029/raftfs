@@ -61,6 +61,7 @@ namespace raftfs {
             	bool exists;
             	test_dir_node(test_dir_node * ptr, string name) {
             		parent = ptr;	fullname = name;
+            		exists = false;
             	}
             } PerfTestNode;
 

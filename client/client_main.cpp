@@ -38,7 +38,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
     para.filename = "perf_test_1.log";
-    para.max_cmds = 0;
+    para.max_cmds = 3;
     // Read / Write
     para.cmd_ratio[pcmd_type::perf_mkdir] = 18;
     para.cmd_ratio[pcmd_type::perf_createfile] = 18;
@@ -48,7 +48,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
     para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;
     PerfTest ptest1(&client, &para);
     ptest1.result_write_head();
-    //ptest1.run();
+    ptest1.run();
 #endif
 
     return 0;
