@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
 
 #if(TEST_MODULE_ENABLE == 1)
 #define TOTAL_CMDS	100
-#define TEST_LOG	""
 typedef PerfTest::perf_cmd_type pcmd_type;
+
     PerfTest::PerfTestParameters para;
     para.filename = "perf_test_1.log";
     para.max_cmds = 0;
@@ -48,6 +48,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
     para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;
     PerfTest ptest1(&client, &para);
     ptest1.result_write_head();
+    //ptest1.run();
 #endif
 
     return 0;

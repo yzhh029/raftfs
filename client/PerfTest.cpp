@@ -55,6 +55,31 @@ namespace raftfs {
             // TODO: if record file is not close. Close it.
         	if(result_file.is_open())
         		result_file.close();
+
+        	for(auto p: test_tree) {
+        		delete p;
+        	}
+        }
+
+        void PerfTest::create_test_tree(int test_case) {
+        	switch (test_case) {
+        	case 1:
+        	{
+        		PerfTestNode* dir1 = new PerfTestNode(nullptr, "/dir1");
+        		test_tree.push_back(dir1);
+        		PerfTestNode* file11 = new PerfTestNode(dir1, "/dir1/file11");
+        		PerfTestNode* file12 = new PerfTestNode(dir1, "/dir1/file12");
+        		PerfTestNode* file13 = new PerfTestNode(dir1, "/dir1/file13");
+        		test_tree.push_back(file11);
+        		test_tree.push_back(file12);
+        		test_tree.push_back(file13);
+        	}
+        		break;
+        	default:
+        		cout << "ERROR: test case " << test_case
+        			<< "does not exists!" << endl;
+        		break;
+        	}
         }
 
         //-------------------------------------------------------
@@ -126,9 +151,7 @@ namespace raftfs {
 
         	std::chrono::system_clock::time_point p = system_clock::now();
         	std::time_t t = system_clock::to_time_t(p);
-        	result_file << "Test on: "
-        		<< std::ctime(&t)
-        	 	<< endl;
+        	result_file << "Test on: " << std::ctime(&t) << endl;
         }
 
 #if(0)	// Functions in FSClient that we may need to overload...

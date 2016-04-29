@@ -70,7 +70,7 @@ namespace raftfs {
             ~PerfTest();
             void run();		// main entry
 
-
+            void create_test_tree(int test_case);
             void result_write_head();
 
 
@@ -116,7 +116,9 @@ namespace raftfs {
             int cmd_cumulated_gate[perf_cmd_max];	// for runtime execution.
             int64_t	cmd_total_to_run;
             int64_t	cmd_executed;
-
+            //-------------------------------------
+            // Test Tree structure.
+            std::vector<PerfTestNode *> test_tree;
 
 
         };
