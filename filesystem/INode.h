@@ -141,6 +141,7 @@ namespace raftfs {
             INodeDirectory() = default;
             INodeDirectory(const std::string _name, INode* _parent);
             INodeDirectory(const std::string _name, const std::string _owner, INode * _parent);
+
             bool IsEmpty() const {
                 std::lock_guard<std::mutex> lock(m);
                 return children.empty();
@@ -171,8 +172,8 @@ namespace raftfs {
              * Create a child node.
              */
             // Currently use parent's mode / prop.
-            bool CreateFile(const std::string &file_name);
-            bool CreateDir(std::string &dir_name);
+            INodeFile * CreateFile(const std::string &file_name);
+            INodeDirectory * CreateDir(std::string &dir_name);
 
             // maybe use this function to replace the other two;
             bool AddChild(INode * new_child);

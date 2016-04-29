@@ -24,7 +24,7 @@ void iNode_test() {
     cout << *f1_node << " " << f1_node->IsDir() << " "
                             << f1_node->IsFile() << " " << f1_node->IsRoot() <<endl;
 
-    string dir1("dir1"), dir2("dir2");
+    string dir1("dir1"), dir2("dir2"), dir3("dir3");
 
     shared_ptr<INode> dir1_node = make_shared<INodeDirectory>(dir1, owner, nullptr);
     cout << *dir1_node << " " << dir1_node->IsDir() << " "
@@ -57,37 +57,39 @@ void iNode_test() {
     cout << chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
                                                            .time_since_epoch()).count() << endl;
 
-
     cout << "get file2 " << dir1_ptr->GetChild(f2)->GetName() << endl;
     cout << "get file1 " << dir1_ptr->GetChild(f1) << endl;
     cout << "get dir2 " << dir1_ptr->GetChild(dir2)->GetName() << endl;
 
+    auto dirs = dir1_ptr->ListDirName();
 
+    for (auto& n: dirs) {
+        cout << n << endl;
+    }
+
+    cout << " add dir3 to dir2 " << static_cast<INodeDirectory *>(dir1_ptr->GetChild(dir2))->CreateDir(dir3) << endl;
+    cout << " add file1 to dir2 " << static_cast<INodeDirectory *>(dir1_ptr->GetChild(dir2))->CreateFile(f1) << endl;
+    cout << *dir1_ptr << endl;
+
+    // remove dir2
+    cout << "delete dir2 " << dir1_ptr->DeleteChild(dir2, true) << endl;
+    cout << *dir1_ptr << endl;
+}
+
+void fs_test() {
+    FSNamespace fs;
+
+    string owner("fakeowner");
+
+    cout << " try mkdir /abc/def should 0 " << fs.MakeDir("/abc/def", owner, false) << endl;
+    cout << " try mkdir /abc/def should 1 " << fs.MakeDir("/abc/def", owner, true) << endl;
 }
 
 int main(int argc, char** argv) {
 
-    iNode_test();
+    //iNode_test();
 
-    FSNamespace fs;
-    char a[128] = "/a/b//c//d";
-    char * pch;
-
-    string owner("fake");
-
-    //INodeFile t1("bad", owner, nullptr);
-    //cout << t1.ValidName("/badname{") << endl;
-    //cout << t1.ValidName("/goodfile") << endl;
-/*
-    cout << "mkdir /test1 : " << fs.MakeDir("/test1", owner, false) << endl;
-    cout << "mkdir /test2 : " << fs.MakeDir("/test2", owner, false) << endl;
-    //fs.list();
-    cout << "mkdir test3: " << fs.MakeDir("test3", owner, false) << endl;
-    cout << "mkdir /test1/test4" << fs.MakeDir("/test1/test4", owner, false) << endl;
-    cout << "mkdir /null/test5" << fs.MakeDir("/null/test5", owner, false) << endl;
-    */
-    //fs.list();
-    //cout << "Delete all childe" << fs.DeleteAllChild();
+    fs_test();
 
     return 0;
 

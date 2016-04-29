@@ -9,7 +9,7 @@
 #include "../utils/time_utils.h"
 #include <iostream>
 #include <mutex>
-//#include <algorithm>
+#include <algorithm>
 #include <vector>
 #include <string.h>
 #include <cstddef>
@@ -176,15 +176,15 @@ namespace raftfs {
 
 
 
-        bool INodeDirectory::CreateFile(const string &file_name) {
+        INodeFile * INodeDirectory::CreateFile(const string &file_name) {
         	// don't allow two INodes have same name
         	if(GetChild(file_name)) {
-                return false;
+                return nullptr;
             }
 
             INode* file = new INodeFile(file_name, this);
             AddChild(file);
-        	return true;
+        	return static_cast<INodeFile *>(file);
         }
 
 
@@ -203,7 +203,7 @@ namespace raftfs {
 
 
         std::vector<std::string> INodeDirectory::ListDirName() const {
-
+            lock_guard<mutex> lock(m);
             vector<string> dir_lists;
             dir_lists.reserve(children.size());
             for (const auto& inode : children) {
@@ -215,6 +215,7 @@ namespace raftfs {
 
         std::vector<INode *> INodeDirectory::ListDirINode() const {
 
+            lock_guard<mutex> lock(m);
             vector<INode *> dir_lists;
             dir_lists.reserve(children.size());
             for (const auto& inode : children) {
@@ -223,54 +224,52 @@ namespace raftfs {
             return dir_lists;
         }
 
-        bool INodeDirectory::CreateDir(std::string &dir_name) {
+        INodeDirectory * INodeDirectory::CreateDir(std::string &dir_name) {
         	// don't allow two INodes have same name
         	if(GetChild(dir_name))
-                return false;
+                return nullptr;
 
-            INodeDirectory * dir = new INodeDirectory(dir_name, this);
+            INode * dir = new INodeDirectory(dir_name, this);
             AddChild(dir);
+
+            return static_cast<INodeDirectory *>(dir);
+        }
+
+        bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {
+
+            lock_guard<mutex> lock(m);
+            auto it = find_if(children.begin(), children.end(), [&child_name](const shared_ptr<INode>& i) {
+                return child_name == i->GetName();
+            });
+
+            if ((*it)->IsDir() && !static_pointer_cast<INodeDirectory>(*it)->IsEmpty()) {
+                if (!recursive || !static_pointer_cast<INodeDirectory>(*it)->DeleteAllChild()) {
+                    return false;
+                }
+            }
+
+            cout << " deleting " << (*it)->GetName() << endl;
+
+            it->reset();
+            children.erase(it);
+            children_map.erase(child_name);
 
             return true;
         }
 
-        bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {
-            // todo
-        	INode* target = GetChild(child_name);
-        	if(!target)	return false;
 
-    		if (target->IsFile()) {	// ignore recursive if IsFile
-    			//delete target;
-    			children_map.erase(child_name);
-    			return true;
-    		} else {
-    			// IsDir
-            	if(recursive) {
-            		// TODO: check if crash
-
-
-            	} else {
-            		if( ((INodeDirectory*)target)->IsEmpty() ) {
-            			delete target;
-            			children_map.erase(child_name);
-            		}else {
-            			return false;
-            		}
-            	}
-    		}
-            return false;
-        }
-
+        // assume dir is not empty
         bool INodeDirectory::DeleteAllChild() {
-        	for(auto it: children) {
-        		if(it->IsFile()) {
-					it.reset();
-				} else {	// IsDir()
-					((INodeDirectory*)children_map[it->GetName()])->DeleteAllChild();
-					it.reset();
-				}
-        		children_map.erase(it->GetName());
-        	}
+
+            while (!IsEmpty()) {
+                cout << name << " try delete " << children.front()->GetName() << endl;
+                if (!DeleteChild(children.front()->GetName(), true)) {
+                    return false;
+                } else {
+                    cout << "deleted " << endl;
+                }
+            }
+
             return true;
         }
 

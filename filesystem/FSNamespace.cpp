@@ -14,7 +14,10 @@
 #include <sstream>
 #include <cassert>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace std;
+using namespace boost::algorithm;
 using namespace raftfs::protocol;
 
 namespace raftfs {
@@ -28,7 +31,7 @@ namespace raftfs {
          *******************************************************************/
 
         FSNamespace::FSNamespace() :
-                root(make_shared<INodeDirectory>(string(), string("raftfs"), nullptr)) {
+                root(make_shared<INodeDirectory>(string("/"), string("raftfs"), nullptr)) {
             // the parent of root is itself
             root->SetParent(root.get());
 
@@ -51,33 +54,51 @@ namespace raftfs {
             // todo find other way to validate path
             assert(abs_dir[0] == '/');
 
-            istringstream f(abs_dir);
-            string next_lvl;
-            //
-            while (!f.eof() && getline(f, next_lvl, '/')) {
+            vector<string> dir_split;
+            boost::split(dir_split, abs_dir, boost::is_any_of("/"));
 
-                if (next_lvl.empty())
-                    continue;
+            int new_dir = 0, i;
 
-                INode* nextdir = current->GetChild(next_lvl);
-
-                // TODO: now we make parents anyway... ignoring "make_parents"
-                if (!nextdir) {
-                    //-- Reach final level -> Create if not exist
-                    if (current->CreateDir(next_lvl)) {
-                        nextdir = current->GetChild(next_lvl);
-                    } else {
-                        return false;
-                    }
+            for (i = 0; i < dir_split.size(); ++i) {
+                // dir exist
+                auto sub = current->GetChild(dir_split[i]);
+                if (sub) {
+                    current = static_cast<INodeDirectory *>(sub);
                 } else {
-                    //-- Advance to next level
-                    cout << "Next level: " << next_lvl << endl;
-                    if (nextdir->IsDir()) {
-                        current = static_cast<INodeDirectory *>(nextdir);
-                    }else{
-                    	return false;	// existing a file in the middle, not dir.
+                    // missing middle level
+
+                    if (i!= dir_split.size() - 1) {
+                        // remember the index of the first missing level
+                        if (!new_dir)
+                            new_dir = i;
+
+                        if (make_parents) {
+                            // if create middle dir is allowed
+                            sub = current->CreateDir(dir_split[i]);
+                            // create success
+                            if (sub) {
+                                current = static_cast<INodeDirectory *>(sub);
+                            } else {
+                                break;
+                            }
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        // reach final level, create dir
+                        if (current->CreateDir(dir_split[i]) ){
+                            new_dir = 0;
+                        }
                     }
                 }
+            }
+
+            if (new_dir && new_dir != i) {
+                for (; i != new_dir - 1; --i) {
+                    current = static_cast<INodeDirectory *>(current->GetParent());
+                }
+                current->DeleteChild(dir_split[new_dir], true);
+                return false;
             }
             return true;
         }
