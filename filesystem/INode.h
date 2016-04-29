@@ -174,6 +174,7 @@ namespace raftfs {
             // Currently use parent's mode / prop.
             INodeFile * CreateFile(const std::string &file_name);
             INodeDirectory * CreateDir(std::string &dir_name);
+            INodeDirectory * CreateDir(std::string &dir_name, std::string owner);
 
             // maybe use this function to replace the other two;
             bool AddChild(INode * new_child);

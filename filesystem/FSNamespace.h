@@ -35,13 +35,15 @@ namespace raftfs {
 
             bool MakeDir(const std::string abs_dir, const std::string &owner, bool make_parents);
             bool DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive);
+
+            // the parent folder must exist for file operations
             bool CreateFile(const std::string &new_file, const std::string &owner);
             bool RemoveFile(const std::string &file_name, const std::string &visitor);
             bool UpdateFile(const std::string &file_name, const std::string &visitor, protocol::FileInfo new_info);
 
             bool ExistInode(const std::string &abs_path) const;
             std::vector<std::string> ListDir(const std::string &abs_dir) const;
-            protocol::FileInfo GetFileInfo(const std::string &filename) const;
+            bool GetFileInfo(const std::string &filename, protocol::FileInfo &info) const;
 
 			// Print a Log for debugging purposes.
 			friend std::ostream& operator<<(std::ostream& os, const FSNamespace& fs);
@@ -53,17 +55,14 @@ namespace raftfs {
 
         private:
 
-            std::vector<std::string> SplitPath(std::string abs_path);
+            std::vector<std::string> SplitPath(std::string abs_path) const;
+            std::pair<INodeDirectory *, std::string> GetParentFolderAndChild(const std::string &abs_path) const;
 
+        private:
 			// Data structures to entry storage
             mutable std::mutex m;
 
             std::shared_ptr<filesystem::INodeDirectory> root;
-            //INode * curdir;
-            //std::string curdir_str;
-
-            void output_space(int a);
-
         };
     }
 }

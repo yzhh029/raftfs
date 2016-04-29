@@ -249,7 +249,7 @@ namespace raftfs {
                 }
             }
 
-            cout << " deleting " << (*it)->GetName() << endl;
+            //cout << " deleting " << (*it)->GetName() << endl;
 
             it->reset();
             children.erase(it);
@@ -263,11 +263,11 @@ namespace raftfs {
         bool INodeDirectory::DeleteAllChild() {
 
             while (!IsEmpty()) {
-                cout << name << " try delete " << children.front()->GetName() << endl;
+                //cout << name << " try delete " << children.front()->GetName() << endl;
                 if (!DeleteChild(children.front()->GetName(), true)) {
                     return false;
                 } else {
-                    cout << "deleted " << endl;
+                    //cout << "deleted " << endl;
                 }
             }
 
@@ -276,7 +276,7 @@ namespace raftfs {
 
 
         void INodeDirectory::Print(int level) const {
-            
+
             cout << setw(level * 2) << name << "/" << endl;
             for (auto& child : children) {
                 if (child->IsDir()) {

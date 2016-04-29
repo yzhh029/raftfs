@@ -47,13 +47,28 @@ namespace raftfs {
         }
 
 
-        std::vector<std::string> FSNamespace::SplitPath(string abs_path) {
+        std::vector<std::string> FSNamespace::SplitPath(string abs_path) const {
             vector<string> dir_split;
             boost::split(dir_split, abs_path, boost::is_any_of("/"));
             dir_split.erase(dir_split.begin());
             return dir_split;
         }
 
+
+        pair<INodeDirectory *, string> FSNamespace::GetParentFolderAndChild(const string &abs_path) const {
+
+            auto dir_split = SplitPath(abs_path);
+            auto current = root.get();
+            for (int i = 0; i < dir_split.size() - 1; ++i) {
+                auto next = current->GetChild(dir_split[i]);
+                if (next && next->IsDir()) {
+                    current = static_cast<INodeDirectory *>(next);
+                } else {
+                    return make_pair(nullptr, string());
+                }
+            }
+            return make_pair(current, dir_split.back());
+        }
 
         bool FSNamespace::MakeDir(const string abs_dir, const std::string &owner, bool make_parents) {
             std::lock_guard<std::mutex> guard(m);
@@ -68,13 +83,13 @@ namespace raftfs {
 
             for (i = 0; i < dir_split.size(); ++i) {
                 // dir exist
-                cout << "sub path " << dir_split[i] << endl;
+                //cout << "sub path " << dir_split[i] << endl;
                 auto sub = current->GetChild(dir_split[i]);
                 if (sub) {
                     current = static_cast<INodeDirectory *>(sub);
                 } else {
                     // missing middle level
-                    cout << "missing " << dir_split[i] << endl;
+                    //cout << "missing " << dir_split[i] << endl;
                     if (i!= dir_split.size() - 1) {
                         // remember the index of the first missing level
                         if (!new_dir)
@@ -114,21 +129,14 @@ namespace raftfs {
 
         bool FSNamespace::DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive) {
 
-            auto current = root.get();
-            auto dir_split = SplitPath(abs_dir);
+            lock_guard<mutex> lock(m);
 
-            for (int i = 0 ; i < dir_split.size() - 1; ++i) {
-                auto sub_ptr = current->GetChild(dir_split[i]);
-                if (sub_ptr) {
-                    current = static_cast<INodeDirectory *>(sub_ptr);
-                } else {
-                    break;
-                }
-            }
-            // found the parent of last dir
-            if (current->GetName() == dir_split[dir_split.size()-2] &&
-                    current->GetChild(dir_split[dir_split.size()-1])->GetOwner() == visitor) {
-                return current->DeleteChild(dir_split[dir_split.size()-2], recursive);
+            auto parent_child = GetParentFolderAndChild(abs_dir);
+
+            if (parent_child.first ) {
+                auto target = parent_child.first->GetChild(parent_child.second);
+                if (target && target->IsDir() && (target->GetOwner() == visitor || target->GetOwner() == "unknown"))
+                    return parent_child.first->DeleteChild(parent_child.second, recursive);
             }
 
             return false;
@@ -136,42 +144,24 @@ namespace raftfs {
 
         bool FSNamespace::CreateFile(const std::string &new_file, const std::string &owner) {
             std::lock_guard<std::mutex> guard(m);
-            INodeDirectory* current = root.get();
 
-            // todo find other way to validate path
-            assert(new_file[0] == '/');
+            auto parent_child = GetParentFolderAndChild(new_file);
 
-            istringstream f(new_file);
-            string next_lvl;
-            //
-            while (!f.eof() && getline(f, next_lvl, '/')) {
-
-                if (next_lvl.empty())
-                    continue;
-
-                INode* nextdir = current->GetChild(next_lvl);
-
-                if (!nextdir) {
-                	if(f.eof()) {
-                        //-- Reach final level -> Create if not exist
-                        return current->CreateFile(next_lvl);
-                    } else {
-                        return false;	// no middle dir.
-                    }
-                } else {
-                    //-- Advance to next level
-                    cout << "Next level: " << next_lvl << endl;
-                    if (nextdir->IsDir()) {
-                        current = static_cast<INodeDirectory *>(nextdir);
-                    }else{
-                    	return false;	// existing a file in the middle, not dir.
-                    }
-                }
+            if (parent_child.first) {
+                return parent_child.first->CreateFile(parent_child.second) != nullptr;
             }
             return false;
         }
 
         bool FSNamespace::RemoveFile(const std::string &file_name, const std::string &visitor) {
+
+            lock_guard<mutex> lock(m);
+
+            auto parent_child = GetParentFolderAndChild(file_name);
+
+            if (parent_child.first) {
+                return parent_child.first->DeleteChild(parent_child.second, false);
+            }
             return false;
         }
 
@@ -185,28 +175,40 @@ namespace raftfs {
         }
 
         std::vector<std::string> FSNamespace::ListDir(const std::string &abs_dir) const {
+
+            lock_guard<mutex> lock(m);
+
+            auto parent_child = GetParentFolderAndChild(abs_dir);
+
+            if (parent_child.first) {
+                auto target_dir = static_cast<INodeDirectory *>(parent_child.first->GetChild(parent_child.second));
+
+                if (target_dir) {
+                    return target_dir->ListDirName();
+                }
+            }
             return std::vector<std::string>();
         }
 
-        protocol::FileInfo FSNamespace::GetFileInfo(const std::string &filename) const {
-            return protocol::FileInfo();
+        bool FSNamespace::GetFileInfo(const std::string &filename, protocol::FileInfo &info) const {
+
+            lock_guard<mutex> guard(m);
+
+            auto parent_child = GetParentFolderAndChild(filename);
+
+            if (parent_child.first) {
+                auto target_file = static_cast<INodeFile *>(parent_child.first->GetChild(parent_child.second));
+                if (!target_file) {
+                    return false;
+                }
+                target_file->ToFileInfo(info);
+            }
+            return true;
         }
 
 
         void FSNamespace::Print() const {
             root->Print(1);
-        }
-
-
-        /*
-         * Output formating functions
-         */
-        void FSNamespace::output_space(int a) {
-            char spaces[256];
-            memset(spaces, ' ', 255);
-            spaces[255] = '\0';
-            spaces[a * 2] = '\0';
-            cout << spaces;
         }
 
 

@@ -81,6 +81,7 @@ void fs_test() {
 
     string owner("fakeowner");
 
+    cout << " try mkdir /aaa should 1 " << fs.MakeDir("/aaa", owner, false) << endl;
     cout << " try mkdir /abc/def should 0 " << fs.MakeDir("/abc/def", owner, false) << endl;
     cout << " try mkdir /abc/def should 1 " << fs.MakeDir("/abc/def", owner, true) << endl;
     fs.Print();
@@ -89,6 +90,13 @@ void fs_test() {
     fs.Print();
 
     cout << " try rmdir /abc/def should 0 " << fs.DeleteDir("/abc/def", owner, false) << endl;
+    cout << " try rmdir /abc/def/ should 1 " << fs.DeleteDir("/abc/def", owner, true) << endl;
+    fs.Print();
+
+    cout << " try create file /abc/abc shoud 1 " << fs.CreateFile("/abc/abc", owner) << endl;
+    fs.Print();
+    cout << " try create file /flaskdfj/asldkfj should 0 " << fs.CreateFile("/flaskdfj/asldkfj", owner) << endl;
+    fs.Print();
 }
 
 int main(int argc, char** argv) {
