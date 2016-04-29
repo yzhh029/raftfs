@@ -8,6 +8,8 @@ enum MetaOp {
     kRmdir,
     kCreate,
     kDelete,
+    kGetFileInfo,
+    kListDir,
     kNoop
 }
 
