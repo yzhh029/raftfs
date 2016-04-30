@@ -17,6 +17,7 @@
 #include <boost/make_shared.hpp>
 #include <iostream>
 #include <thread>
+#include <memory>
 
 using namespace boost;
 using namespace apache::thrift;
@@ -28,7 +29,8 @@ namespace raftfs {
     namespace server {
 
         RaftMetaServer::RaftMetaServer(Options &opt) :
-                raft_state(new RaftConsensus(opt))
+                raft_state(new RaftConsensus(opt)),
+                fs_namespace(std::make_shared<filesystem::FSNamespace>())
         {
             cout << "MetaServer init" << endl;
             InitRPCServer(opt.GetPort(), 10);
@@ -50,7 +52,7 @@ namespace raftfs {
 
             boost::shared_ptr<TProcessor> client_processor(
                     new ClientServiceProcessor(
-                            boost::shared_ptr<ClientRPCService>(new ClientRPCService(*raft_state))
+                            boost::shared_ptr<ClientRPCService>(new ClientRPCService(*raft_state, *fs_namespace))
                     )
             );
             mux_processor->registerProcessor("FSClient", client_processor);
@@ -77,6 +79,7 @@ namespace raftfs {
             //thread rpc_thread([this](){this->rpc_server->serve();});
             raft_state->StartRemoteLoops();
             raft_state->StartLeaderCheckLoop();
+            raft_state->StartFSUpdateLoop(fs_namespace.get());
             rpc_server->serve();
             //rpc_thread.join();
         }

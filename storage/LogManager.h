@@ -40,6 +40,8 @@ namespace raftfs {
 
 			const Entry* GetEntry(int64_t index) const;
 
+            std::vector<Entry *> GetNewCommitedEntries(int64_t ) const;
+
             std::vector<Entry> GetEntriesStartAt(int64_t start_index) const;
             int64_t GetEntryLoc(int64_t lookup_index);
 

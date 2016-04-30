@@ -19,6 +19,7 @@ using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
+using namespace raftfs::filesystem;
 
 namespace raftfs {
     namespace server {
@@ -73,6 +74,11 @@ namespace raftfs {
 
         void RaftConsensus::StartLeaderCheckLoop() {
             thread(&RaftConsensus::CheckLeaderLoop, this).detach();
+        }
+
+
+        void RaftConsensus::StartFSUpdateLoop(FSNamespace *fs) {
+            thread(&RaftConsensus::FSUpdateLoop, this, fs).detach();
         }
 
         /*
@@ -167,8 +173,9 @@ namespace raftfs {
                         cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
                         << " S: " << ae_resp.success << endl;
                         // deal with response.
-
+                        // have normal ae response
                         if (ae_resp.term == current_term) {
+
                             if (ae_resp.success) {
                                 if (!ae_req.entries.empty()) {
                                     // append new entries success
@@ -192,9 +199,9 @@ namespace raftfs {
                                     cout << "log: " << log << endl;
 
                                     // update commit index
-                                    log.SetLastCommitIndex(new_commit);
-                                    cout << TimePointStr(Now()) << " new commit index:" << new_commit << endl;
-                                    client_ready.notify_all();
+                                    if (commit_index != new_commit) {
+                                        fs_commit.notify_all();
+                                    }
                                 } else {
                                     // normal heartbeat response also goes here
                                     // for now do nothing
@@ -277,6 +284,60 @@ namespace raftfs {
 
             }
         }
+
+
+        void RaftConsensus::FSUpdateLoop(FSNamespace *fs) {
+
+            using namespace raftfs::protocol;
+
+            unique_lock<mutex> lock(fs_m);
+
+            while (!stop) {
+                fs_commit.wait(lock, [this]() {
+                    return log.GetLastCommitIndex() != log.GetLastLogIndex();
+                });
+
+                int64_t commited = 0;
+                for (int64_t i = log.GetLastCommitIndex() + 1; i <= log.GetLastLogIndex(); ++i) {
+                    if (pending_entries[i].size() >= quorum_size) {
+                        const Entry* e = log.GetEntry(i);
+                        switch (e->op) {
+                            case MetaOp::kMkdir: {
+                                // todo maybe add another entry field called client/operator
+                                fs->MakeDir(e->value, string("unknown"), true);
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " mkdir " << e->value << endl;
+                                break;
+                            }
+                            case MetaOp::kRmdir: {
+                                fs->DeleteDir(e->value, string("unknown"), true);
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << "rmdir " << e->value << endl;
+                                break;
+                            }
+                            case MetaOp::kCreate: {
+                                fs->CreateFile(e->value, string("unknown"));
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << "create file " << e->value << endl;
+                                break;
+                            }
+                            case MetaOp::kDelete: {
+                                fs->RemoveFile(e->value, string("unknown"));
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << "delete file " << e->value << endl;
+                                break;
+                            }
+                            default:
+                                cout << "UNKNOWN fs op !!!" << e->op << endl;
+                        }
+                        commited = i;
+                    }
+                }
+
+                log.SetLastCommitIndex(commited);
+                //cout << "fs update wake up commit " << log.GetLastCommitIndex() << " last " << log.GetLastLogIndex() << endl;
+                client_ready.notify_all();
+                //this_thread::sleep_for(chrono::seconds(1));
+            }
+
+        }
+
 
         void RaftConsensus::StartLeaderElection() {
             ++current_term;
@@ -474,7 +535,7 @@ namespace raftfs {
                 unique_lock<mutex> lock(cli_m);
                 if (client_ready.wait_for(lock, chrono::seconds(2), [&] {return e->index <= log.GetLastCommitIndex();})) {
                     // success
-                    cout << TimePointStr(Now()) << e->index << "commited!" << endl;
+                    cout << TimePointStr(Now()) << e->index << " commited!" << endl;
                     return protocol::Status::kOK;
                 } else {
                     cout << TimePointStr(Now()) << e->index << "timeout!" << endl;

@@ -9,6 +9,7 @@
 #include <server/TThreadPoolServer.h>
 
 #include "RaftConsensus.h"
+#include "../filesystem/FSNamespace.h"
 #include "../utils/Options.h"
 
 namespace THserver = apache::thrift::server;
@@ -30,6 +31,8 @@ namespace raftfs {
         private:
             std::shared_ptr<RaftConsensus> raft_state;
             THserver::TThreadPoolServer* rpc_server;
+            std::shared_ptr<filesystem::FSNamespace> fs_namespace;
+
         };
     }
 }

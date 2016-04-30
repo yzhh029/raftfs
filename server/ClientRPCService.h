@@ -7,14 +7,17 @@
 
 #include "RaftConsensus.h"
 #include "../protocol/ClientService.h"
+#include "../filesystem/FSNamespace.h"
 #include <memory>
 
 namespace raftfs {
     namespace server {
         class ClientRPCService : virtual public protocol::ClientServiceIf {
         public:
-            ClientRPCService(RaftConsensus& state):
-                    raft_state(state) {}
+            ClientRPCService(RaftConsensus& state, filesystem::FSNamespace& _fs)
+                    : raft_state(state),
+                      fs(_fs)
+            {}
 
             void GetLeader(protocol::GetLeaderResponse &_return) override ;
 
@@ -34,6 +37,7 @@ namespace raftfs {
 
         private:
             RaftConsensus& raft_state;
+            filesystem::FSNamespace& fs;
         };
     }
 }

@@ -16,6 +16,7 @@
 #include <map>
 #include <unordered_map>
 #include <transport/TSocket.h>
+#include "../filesystem/FSNamespace.h"
 
 #include "../protocol/RaftService.h"
 #include "../protocol/ClientService.h"
@@ -79,6 +80,7 @@ namespace raftfs {
 
             void StartRemoteLoops();
             void StartLeaderCheckLoop();
+            void StartFSUpdateLoop(filesystem::FSNamespace *fs);
             // Raft rpc handler
             void OnRequestVote(protocol::ReqVoteResponse& resp, const protocol::ReqVoteRequest& req);
             void OnAppendEntries(protocol::AppendEntriesResponse& resp, const protocol::AppendEntriesRequest& req);
@@ -89,6 +91,7 @@ namespace raftfs {
             protocol::Status::type OnInjectTestCase(int32_t type);
 
             int32_t GetLeader() const {return leader_id;}
+            bool IsLeader() const {return leader_id == self_id;}
         private:
 
             /*
@@ -101,6 +104,11 @@ namespace raftfs {
              * perform operations based on current role
              */
             void RemoteHostLoop(std::shared_ptr<RemoteHost> remote);
+
+            /*
+             *
+             */
+            void FSUpdateLoop(filesystem::FSNamespace *fs);
             void StartLeaderElection();
             void ChangeToLeader();
             void ChangeToFollower(int64_t new_term);
@@ -172,6 +180,9 @@ namespace raftfs {
             std::mutex cli_m;
             // client rpc thread will wait on this cv
             std::condition_variable client_ready;
+
+            std::mutex fs_m;
+            std::condition_variable fs_commit;
         };
     }
 }

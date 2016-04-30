@@ -57,15 +57,8 @@ namespace raftfs {
 
         pair<INodeDirectory *, string> FSNamespace::GetParentFolderAndChild(const string &abs_path) const {
 
-            if (abs_path == "/")
-                return make_pair(root.get(), string());
-
             auto dir_split = SplitPath(abs_path);
             auto current = root.get();
-
-            if (dir_split.size() == 1) {
-                return make_pair(root.get(), dir_split.front());
-            }
             for (int i = 0; i < dir_split.size() - 1; ++i) {
                 auto next = current->GetChild(dir_split[i]);
                 if (next && next->IsDir()) {
@@ -141,9 +134,6 @@ namespace raftfs {
             auto parent_child = GetParentFolderAndChild(abs_dir);
 
             if (parent_child.first ) {
-                if (parent_child.second.empty())
-                    return false;
-
                 auto target = parent_child.first->GetChild(parent_child.second);
                 if (target && target->IsDir() && (target->GetOwner() == visitor || target->GetOwner() == "unknown"))
                     return parent_child.first->DeleteChild(parent_child.second, recursive);
@@ -157,7 +147,7 @@ namespace raftfs {
 
             auto parent_child = GetParentFolderAndChild(new_file);
 
-            if (parent_child.first && !parent_child.second.empty()) {
+            if (parent_child.first) {
                 return parent_child.first->CreateFile(parent_child.second) != nullptr;
             }
             return false;
@@ -170,8 +160,6 @@ namespace raftfs {
             auto parent_child = GetParentFolderAndChild(file_name);
 
             if (parent_child.first) {
-                if (parent_child.second.empty())
-                    return false;
                 return parent_child.first->DeleteChild(parent_child.second, false);
             }
             return false;
@@ -193,10 +181,6 @@ namespace raftfs {
             auto parent_child = GetParentFolderAndChild(abs_dir);
 
             if (parent_child.first) {
-
-                if (parent_child.second.empty()) {
-                    return root->ListDirName();
-                }
                 auto target_dir = static_cast<INodeDirectory *>(parent_child.first->GetChild(parent_child.second));
 
                 if (target_dir) {
@@ -213,8 +197,6 @@ namespace raftfs {
             auto parent_child = GetParentFolderAndChild(filename);
 
             if (parent_child.first) {
-                if (parent_child.second.empty())
-                    return false;
                 auto target_file = static_cast<INodeFile *>(parent_child.first->GetChild(parent_child.second));
                 if (!target_file) {
                     return false;

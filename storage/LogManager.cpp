@@ -140,6 +140,21 @@ namespace raftfs {
         }
 
 
+        const LogManager::Entry *LogManager::GetEntry(int64_t index) const {
+
+            auto it = find_if(memory_log.rbegin(), memory_log.rend(), [index](const Entry* e){
+                return e->index == index;
+            });
+
+            if (it != memory_log.rend()){
+                return *it;
+            } else {
+                return nullptr;
+            }
+
+        }
+
+
         vector<LogManager::Entry> LogManager::GetEntriesStartAt(int64_t start_index) const {
 
             auto it = lower_bound(memory_log.begin(), memory_log.end(), start_index, [](const Entry* lhs, int64_t index){ return lhs->index <= index;});

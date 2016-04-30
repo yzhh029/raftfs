@@ -6,10 +6,12 @@ namespace cpp raftfs.protocol
 enum Status {
     kOK,
     kNoLeader,
+    kNotLeader,
     kNotFound,
     kTimeout,
     kExist,
-    kCommError
+    kCommError,
+    kPathError
 }
 
 struct GetLeaderResponse {

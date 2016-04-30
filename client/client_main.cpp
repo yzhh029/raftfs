@@ -13,7 +13,7 @@ using namespace std;
 using namespace raftfs;
 using namespace raftfs::client;
 
-#define TEST_MODULE_ENABLE	1
+#define TEST_MODULE_ENABLE	0
 
 int main(int argc, char** argv) {
 
