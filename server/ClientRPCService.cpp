@@ -110,6 +110,10 @@ namespace raftfs {
             cout << " recv LISTDIR " << dir.dir << endl;
 
             _return.__set_dir_list(fs.ListDir(dir.dir));
+            for (auto& l : _return.dir_list) {
+                cout << l << endl;
+            }
+            cout << " reply ok" << endl;
             _return.status = Status::kOK;
 
         }

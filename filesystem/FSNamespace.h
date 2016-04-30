@@ -27,6 +27,9 @@ namespace raftfs {
             FSNamespace();
             ~FSNamespace();
 
+            int64_t GetCommitedIndex() const {return commited_index;}
+            void SetCommitedIndex(int64_t new_index) { commited_index = new_index;}
+
             /*
              * all abs_dir/file_name/new_file/abs_path should be absolute file path
              * i.e. start with "/"
@@ -63,6 +66,7 @@ namespace raftfs {
             mutable std::mutex m;
 
             std::shared_ptr<filesystem::INodeDirectory> root;
+            int64_t commited_index;
         };
     }
 }

@@ -138,7 +138,7 @@ namespace raftfs {
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
 
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
-                            << " L:" << leader_id << " prev:" << ae_req.prev_log_index << endl;
+                            << " L:" << leader_id << " prev:" << ae_req.prev_log_index << " C:" << ae_req.leader_commit_index<< endl;
                         // found one or more new log entry, add them to the request
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
@@ -179,7 +179,7 @@ namespace raftfs {
                             if (ae_resp.success) {
                                 if (!ae_req.entries.empty()) {
                                     // append new entries success
-                                    cout << "r" << id << "update last index " << ae_resp.last_log_index + 1 << endl;
+                                    cout << "r" << id << " update next index " << ae_resp.last_log_index + 1 << endl;
                                     // update remote next index
                                     remote->ResetNextIndex(ae_resp.last_log_index + 1);
 
@@ -200,6 +200,7 @@ namespace raftfs {
 
                                     // update commit index
                                     if (commit_index != new_commit) {
+                                        log.SetLastCommitIndex(new_commit);
                                         fs_commit.notify_all();
                                     }
                                 } else {
@@ -293,13 +294,12 @@ namespace raftfs {
             unique_lock<mutex> lock(fs_m);
 
             while (!stop) {
-                fs_commit.wait(lock, [this]() {
-                    return log.GetLastCommitIndex() != log.GetLastLogIndex();
+                fs_commit.wait(lock, [this, fs]() {
+                    return log.GetLastCommitIndex() != fs->GetCommitedIndex();
                 });
-
                 int64_t commited = 0;
-                for (int64_t i = log.GetLastCommitIndex() + 1; i <= log.GetLastLogIndex(); ++i) {
-                    if (pending_entries[i].size() >= quorum_size) {
+                for (int64_t i = fs->GetCommitedIndex() + 1; i <= log.GetLastCommitIndex(); ++i) {
+                    if ((IsLeader() && pending_entries[i].size() >= quorum_size) || IsFollower()) {
                         const Entry* e = log.GetEntry(i);
                         switch (e->op) {
                             case MetaOp::kMkdir: {
@@ -327,12 +327,15 @@ namespace raftfs {
                                 cout << "UNKNOWN fs op !!!" << e->op << endl;
                         }
                         commited = i;
+                        fs->Print();
+                    } else {
+                        break;
                     }
                 }
-
-                log.SetLastCommitIndex(commited);
+                fs->SetCommitedIndex(commited);
                 //cout << "fs update wake up commit " << log.GetLastCommitIndex() << " last " << log.GetLastLogIndex() << endl;
-                client_ready.notify_all();
+                if (IsLeader())
+                    client_ready.notify_all();
                 //this_thread::sleep_for(chrono::seconds(1));
             }
 
@@ -466,6 +469,13 @@ namespace raftfs {
                     resp.__set_last_log_index(log.GetLastLogIndex());
                 }
 				// TODO: update commit index and apply commited entries
+
+                if (req.leader_commit_index > log.GetLastCommitIndex()) {
+                    log.SetLastCommitIndex(req.leader_commit_index);
+                    cout << "new commit leaderC:" << req.leader_commit_index << " localC:" << log.GetLastCommitIndex() << endl;
+                    fs_commit.notify_all();
+                }
+
             }
 
             // debug output

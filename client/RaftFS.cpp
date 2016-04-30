@@ -144,7 +144,7 @@ namespace raftfs {
                 }
 
             }
-
+            dir_list = resp.dir_list;
             return resp.status;
         }
 

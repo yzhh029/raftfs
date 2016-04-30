@@ -3,6 +3,8 @@
 //
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 #include "RaftFS.h"
 #include "../utils/Options.h"
 #include "PerfTest.h"
@@ -26,8 +28,14 @@ int main(int argc, char** argv) {
     string path("/test");
     for (int i = 0; i < 3; ++i) {
         string p = path + to_string(i);
-        cout << "mkdir " << p << client.Mkdir(p) << endl;
+        cout << "mkdir " << p << " " << client.Mkdir(p) << endl;
 
+    }
+    this_thread::sleep_for(chrono::seconds(1));
+    vector<string> list;
+    cout << " list root " << client.ListDir("/", list) << endl;
+    for (auto& l: list) {
+        cout << l << endl;
     }
     cout << "hello world" << endl;
 

@@ -91,7 +91,8 @@ namespace raftfs {
             protocol::Status::type OnInjectTestCase(int32_t type);
 
             int32_t GetLeader() const {return leader_id;}
-            bool IsLeader() const {return leader_id == self_id;}
+            bool IsLeader() const {return current_role == Role::kLeader ;}
+            bool IsFollower() const {return current_role == Role::kFollower; }
         private:
 
             /*
