@@ -123,7 +123,8 @@ namespace raftfs {
         		}
         		//PerfTestNode * pNode = test_tree[test_node_index % test_tree.size()];
         		PerfTestNode tmp_node(nullptr, "/dir1");		// TODO: get from array / vector
-        		Status_ rtn = Status_::kOK;
+        		//Status_ rtn = Status_::kOK;
+        		int rtn = Status_::kOK;
         		//----------------------------------------------
         		// Run commands
         		// Return status:
@@ -144,22 +145,68 @@ namespace raftfs {
         		switch(next_cmd) {
         		case perf_mkdir:
         			rtn = client->Mkdir(tmp_node.fullname);
+        			// Record dir exists or not
+        			if(rtn == Status_::kOK) {
+        				if(tmp_node.exists) {
+        					cout << /*result_file <<*/ "ERROR: mkdir " << tmp_node.fullname << endl;
+        					rtn = -1;
+        				} else {
+        					tmp_node.exists = true;	// since we make this dir.
+        				}
+        			}
         			break;
 
         		case perf_listdir:
         			rtn = client->ListDir(tmp_node.fullname, tmp_dir_list);
+        			// Record dir exists or not
+        			if(rtn == Status_::kOK) {
+        				if(!tmp_node.exists) {
+        					cout << /*result_file <<*/ "ERROR: listdir " << tmp_node.fullname << endl;
+        					rtn = -1;
+        				} else {
+        					// works fine.
+        				}
+        			}
         			break;
 
         		case perf_getfinfo:
         			rtn = client->GetFileInfo(tmp_node.fullname, tmp_file_info);
+        			// Record dir exists or not
+        			if(rtn == Status_::kOK) {
+        				if(!tmp_node.exists) {
+        					cout << /*result_file <<*/ "ERROR: getinfo " << tmp_node.fullname << endl;
+        					rtn = -1;
+        				} else {
+        					// works fine.
+        				}
+        			}
         			break;
 
         		case perf_createfile:
         			rtn = client->CreateFile(tmp_node.fullname);
+        			// Record dir exists or not
+        			if(rtn == Status_::kOK) {
+        				if(tmp_node.exists) {
+        					cout << /*result_file <<*/ "ERROR: createfile " << tmp_node.fullname << endl;
+        					rtn = -1;
+        				} else {
+        					tmp_node.exists = true;	// since we make this file.
+        				}
+        			}
         			break;
 
         		case perf_delete:
         			rtn = client->Delete(tmp_node.fullname);
+        			// Record dir exists or not
+        			// TODO: check behavior when delete dir / file not exists...
+        			if(rtn == Status_::kOK) {
+        				if(!tmp_node.exists) {
+        					cout << /*result_file <<*/ "ERROR: delete " << tmp_node.fullname << endl;
+        					rtn = -1;
+        				} else {
+        					tmp_node.exists = false;	// since we delete this dir/file
+        				}
+        			}
         			break;
 
         		default:
