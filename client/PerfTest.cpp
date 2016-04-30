@@ -11,6 +11,7 @@
 #include <ctime>        // std::time_t, struct std::tm, std::localtime
 #include <chrono>       // std::chrono::system_clock
 #include "RaftFS.h"
+#include "../utils/time_utils.h"
 
 using namespace std::chrono;
 using namespace raftfs::protocol;
@@ -109,6 +110,8 @@ namespace raftfs {
         	cout << "Perf Test Begin: " << endl;
 
         	while(cmd_executed < cmd_total_to_run) {
+
+        		PerfTestRec rec_result;
         		//----------------------------------------------
         		// Decide which cmd to be exec.
         		tmp = std::rand() % 100;
@@ -164,6 +167,12 @@ namespace raftfs {
                 	break;
         		}
 
+        		//-- Result output and recording
+        		rec_result.cmd = next_cmd;
+        		rec_result.err_no = rtn;
+        		rec_result.node = tmp_node.fullname;
+
+
         		// Preparation for next round.
         		cmd_executed++;
         		test_node_index++;
@@ -176,6 +185,13 @@ namespace raftfs {
         	std::chrono::system_clock::time_point p = system_clock::now();
         	std::time_t t = system_clock::to_time_t(p);
         	result_file << "Test on: " << std::ctime(&t) << endl;
+        }
+
+        void PerfTest::result_write_line(PerfTestRec * result) {
+        	result_file << TimePointStr(Now()) << ", "
+        			<< result->cmd	<< ", "	// TODO: change to cmd string
+        			<< result->node << ", "
+        			<< result->err_no << endl;
         }
 
 #if(0)	// Functions in FSClient that we may need to overload...

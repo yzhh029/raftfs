@@ -73,6 +73,7 @@ namespace raftfs {
 
             void create_test_tree(int test_case);
             void result_write_head();
+            void result_write_line(PerfTestRec * result);
 
 
             /* Things from FSClinet that we may need or not to do tests...
