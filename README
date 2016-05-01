@@ -1,18 +1,26 @@
 #=====================================================================                                                         
 #  README - CS505 Spring 2016 - Final Project
 #  Zhihao Yao, yao86.purdue.edu
-#  Cheng Huang, 0027369626, huang630@purdue.edu
+#  Cheng Huang, huang630@purdue.edu
 #=====================================================================
 
 (a) Usage:
     - Library requirement:
-      - Cmake 3.3 up
+      - Cmake 3.3 above
       - Boost library 1.55
-      - C++ compiler supports C++11
+      - C++ compiler supports C++11 (Suggest 4.8, 4.9, or above)
       - Apache Thrift 0.9.3
 
     - Compile:
-      
+      - Install required library listed above.
+      - Compile Thrift-generated includes / program codes:
+        $ cd protocol
+        $ ./compileThrift.sh
+      - Generate CMake lists
+        $ cd ..     # Goto program source folder.
+        $ cmake .
+        $ make
+        Now the cmake tool should generate all program executables.        
       
     - Execution:
 
