@@ -22,7 +22,11 @@
         $ make
         Now the cmake tool should generate all program executables.        
       
-    - Execution:
+    - Execution in Xinu lab
+      # TODO: Procedures on Xinu
+
+    - Execution with Docker
+      # TODO: Test dockercompile and write procedures.
 
 (b) File and directory list:
     ------------------------------------------------------------------
