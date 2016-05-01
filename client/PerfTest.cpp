@@ -35,7 +35,7 @@ namespace raftfs {
             client = test_through_client;
 
             // Open result file.
-            result_file.open(paras->filename, std::fstream::out);
+            result_file.open(paras->filename, std::fstream::out | fstream::trunc);
             assert(result_file.is_open());        // file can not be opened.
 
             // Copy cmd_ratios
@@ -44,6 +44,7 @@ namespace raftfs {
                 cmd_ratio[i] = paras->cmd_ratio[i];
                 cmd_cumulated_gate[i] = acc + paras->cmd_ratio[i];
                 acc += paras->cmd_ratio[i];
+                cmd_count[i] = 0;
             }
             assert(acc <= 100);        // accumulated cmd ratio should be 100!
             // Maximum Filesystem / Metadata commands to be executed.
@@ -177,11 +178,7 @@ namespace raftfs {
                 int tmp_count;
                 do {
                     next_cmd = rand() % perf_cmd_max;
-                    if (next_cmd == perf_listdir || next_cmd == perf_getfinfo) {
-                        tmp_count = read_count + 1;
-                    } else {
-                        tmp_count = write_count + 1;
-                    }
+                    tmp_count = cmd_count[next_cmd] + 1;
 
                 } while ((tmp_count / static_cast<double>(cmd_total_to_run)) > (this->cmd_ratio[next_cmd]/ 100.0));
                 /*
@@ -272,16 +269,9 @@ namespace raftfs {
                         total_write_latency += Now() - start;
                         ++write_count;
                         // Record dir exists or not
-                        if (rtn == Status_::kOK) {
 
-                            tmp_node->should_exist = true;
-                            /*if (tmp_node->exists) {
-                                cout << *//*result_file <<*//* "ERROR: mkdir " << tmp_node->fullname << endl;
-                                rtn = -1;
-                            } else {
-                                tmp_node->exists = true;    // since we make this dir.
-                            }*/
-                        }
+                        tmp_node->should_exist = (rtn == Status_::kOK);
+
                         break;
                     }
                     case perf_listdir: {
@@ -290,14 +280,7 @@ namespace raftfs {
                         total_read_latency += Now() - start;
                         ++read_count;
                         // Record dir exists or not
-                        if (rtn == Status_::kOK) {
-                            if (!tmp_node->exists) {
-                                cout << /*result_file <<*/ "ERROR: listdir " << tmp_node->fullname << endl;
-                                rtn = -1;
-                            } else {
-                                // works fine.
-                            }
-                        }
+                        tmp_node->should_exist = (rtn == Status_::kOK);
                         break;
                     }
                     case perf_getfinfo: {
@@ -307,14 +290,7 @@ namespace raftfs {
                         total_read_latency += Now() - start;
                         ++read_count;
                         // Record dir exists or not
-                        if (rtn == Status_::kOK) {
-                            if (!tmp_node->exists) {
-                                cout << /*result_file <<*/ "ERROR: getinfo " << tmp_node->fullname << endl;
-                                rtn = -1;
-                            } else {
-                                // works fine.
-                            }
-                        }
+                        tmp_node->should_exist = (rtn == Status_::kOK);
                         break;
                     }
                     case perf_createfile: {
@@ -323,18 +299,8 @@ namespace raftfs {
                         rtn = client->CreateFile(tmp_node->fullname);
                         total_write_latency += Now() - start;
                         ++write_count;
+                        tmp_node->should_exist = (rtn == Status_::kOK);
 
-
-                        // Record dir exists or not
-                        if (rtn == Status_::kOK) {
-                            tmp_node->should_exist = true;
-                            /*if (tmp_node->exists) {
-                                cout << *//**//*result_file <<*//**//* "ERROR: createfile " << tmp_node->fullname << endl;
-                                rtn = -1;
-                            } else {
-                                tmp_node->exists = true;    // since we make this file.
-                            }*/
-                        }
                         break;
                     }
                     case perf_delete: {
@@ -345,15 +311,7 @@ namespace raftfs {
                         ++write_count;
                         // Record dir exists or not
                         // TODO: check behavior when delete dir / file not exists...
-                        if (rtn == Status_::kOK) {
-                            tmp_node->should_exist = false;
-                        }
-                            /*if (!tmp_node->exists) {
-                                cout << *//*result_file <<*//* "ERROR: delete " << tmp_node->fullname << endl;
-                                rtn = -1;
-                            } else {
-                                tmp_node->exists = false;    // since we delete this dir/file
-                            }*/
+                        tmp_node->should_exist = !(rtn == Status_::kOK);
 
                         break;
                     }
@@ -367,6 +325,8 @@ namespace raftfs {
                 rec_result->err_no = rtn;
                 rec_result->node = tmp_node->fullname;
                 records.push_back(rec_result);
+
+                ++cmd_count[next_cmd];
 
                 cout << cmd_executed << "/" << cmd_total_to_run << endl;
                 // Preparation for next round.

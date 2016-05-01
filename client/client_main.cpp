@@ -68,7 +68,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     ptest1.create_test_tree(2);
     ptest1.result_write_head();
-    //ptest1.run();
+    ptest1.run();
 #endif
 
     return 0;
