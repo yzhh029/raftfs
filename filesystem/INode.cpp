@@ -283,19 +283,18 @@ namespace raftfs {
 
         void INodeDirectory::Print(int level) const {
 
-            cout << setw(level * 2) << name << "/" << endl;
+            cout << string(level * 2, ' ') << name << "/" << endl;
             for (auto& child : children) {
                 if (child->IsDir()) {
                     static_pointer_cast<INodeDirectory>(child)->Print(level + 1);
                 } else if (child->IsFile()) {
-                    cout << setw((level +1) * 2) << child->GetName() << endl;
+                    cout << string((level + 1)*2, ' ') << child->GetName() << endl;
                 } else {
                     cout << "WRING CHILD" << endl;
                 }
             }
 
         }
-
 
         std::ostream& operator<<(std::ostream& os, const INode& node) {
         	os << node.GetName();

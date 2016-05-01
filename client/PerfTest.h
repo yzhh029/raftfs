@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include <boost/shared_ptr.hpp>
 #include <transport/TSocket.h>
 
@@ -28,6 +29,7 @@ namespace raftfs {
     namespace client {
 
         typedef protocol::Status::type Status_;
+        typedef chrono::system_clock::time_point Tp;
 
         class PerfTest {
         public:
@@ -59,9 +61,11 @@ namespace raftfs {
             	struct test_dir_node * parent;	// nullptr if root
             	string fullname;
             	bool exists;
+                bool should_exist;
             	test_dir_node(test_dir_node * ptr, string name) {
             		parent = ptr;	fullname = name;
             		exists = false;
+                    should_exist = false;
             	}
             } PerfTestNode;
 
@@ -100,6 +104,10 @@ namespace raftfs {
             std::shared_ptr<protocol::ClientServiceClient> follower_rpc;
             */
 
+            chrono::system_clock::duration total_read_latency; // in us
+            int64_t read_count = 0;
+            chrono::system_clock::duration total_write_latency; // in us
+            int64_t write_count = 0;
         private:
             /*
             int32_t GetLeader();
@@ -114,7 +122,7 @@ namespace raftfs {
 
         private:
             FSClient* client;
-            fstream result_file;
+            ofstream result_file;
             std::vector<PerfTestRec *> records;
             //-------------------------------------
             // Test Running datas
@@ -125,6 +133,12 @@ namespace raftfs {
             //-------------------------------------
             // Test Tree structure.
             std::vector<PerfTestNode *> test_tree;
+
+            std::vector<PerfTestNode *> read_tree;
+            std::vector<PerfTestNode *> write_tree;
+
+			// stat
+
 
 
         };
