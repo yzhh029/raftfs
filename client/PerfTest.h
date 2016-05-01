@@ -74,6 +74,9 @@ namespace raftfs {
             void create_test_tree(int test_case);
             void result_write_head();
             void result_write_line(PerfTestRec * result);
+            void result_write_all_records();
+            void result_write_stats();	// TODO: finish this.
+
 
 
             /* Things from FSClinet that we may need or not to do tests...
@@ -112,6 +115,7 @@ namespace raftfs {
         private:
             FSClient* client;
             fstream result_file;
+            std::vector<PerfTestRec *> records;
             //-------------------------------------
             // Test Running datas
             int cmd_ratio[perf_cmd_max];			// theory value

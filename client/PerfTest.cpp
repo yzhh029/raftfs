@@ -109,9 +109,9 @@ namespace raftfs {
 
         	cout << "Perf Test Begin: " << endl;
 
+        	// TODO: count total time since all results now are pushed into mem
         	while(cmd_executed < cmd_total_to_run) {
 
-        		PerfTestRec rec_result;
         		//----------------------------------------------
         		// Decide which cmd to be exec.
         		tmp = std::rand() % 100;
@@ -121,8 +121,16 @@ namespace raftfs {
         				break;
         			}
         		}
-        		//PerfTestNode * pNode = test_tree[test_node_index % test_tree.size()];
+
+        		PerfTestRec * rec_result = new PerfTestRec();
+				#if(1)
+        		PerfTestNode * tmp_node = test_tree[test_node_index % test_tree.size()];
+				#else
         		PerfTestNode tmp_node(nullptr, "/dir1");		// TODO: get from array / vector
+				#endif
+
+
+
         		//Status_ rtn = Status_::kOK;
         		int rtn = Status_::kOK;
         		//----------------------------------------------
@@ -144,24 +152,24 @@ namespace raftfs {
         		// FIXME: Assume we send to leader first via FSClient interface.
         		switch(next_cmd) {
         		case perf_mkdir:
-        			rtn = client->Mkdir(tmp_node.fullname);
+        			rtn = client->Mkdir(tmp_node->fullname);
         			// Record dir exists or not
         			if(rtn == Status_::kOK) {
-        				if(tmp_node.exists) {
-        					cout << /*result_file <<*/ "ERROR: mkdir " << tmp_node.fullname << endl;
+        				if(tmp_node->exists) {
+        					cout << /*result_file <<*/ "ERROR: mkdir " << tmp_node->fullname << endl;
         					rtn = -1;
         				} else {
-        					tmp_node.exists = true;	// since we make this dir.
+        					tmp_node->exists = true;	// since we make this dir.
         				}
         			}
         			break;
 
         		case perf_listdir:
-        			rtn = client->ListDir(tmp_node.fullname, tmp_dir_list);
+        			rtn = client->ListDir(tmp_node->fullname, tmp_dir_list);
         			// Record dir exists or not
         			if(rtn == Status_::kOK) {
-        				if(!tmp_node.exists) {
-        					cout << /*result_file <<*/ "ERROR: listdir " << tmp_node.fullname << endl;
+        				if(!tmp_node->exists) {
+        					cout << /*result_file <<*/ "ERROR: listdir " << tmp_node->fullname << endl;
         					rtn = -1;
         				} else {
         					// works fine.
@@ -170,11 +178,11 @@ namespace raftfs {
         			break;
 
         		case perf_getfinfo:
-        			rtn = client->GetFileInfo(tmp_node.fullname, tmp_file_info);
+        			rtn = client->GetFileInfo(tmp_node->fullname, tmp_file_info);
         			// Record dir exists or not
         			if(rtn == Status_::kOK) {
-        				if(!tmp_node.exists) {
-        					cout << /*result_file <<*/ "ERROR: getinfo " << tmp_node.fullname << endl;
+        				if(!tmp_node->exists) {
+        					cout << /*result_file <<*/ "ERROR: getinfo " << tmp_node->fullname << endl;
         					rtn = -1;
         				} else {
         					// works fine.
@@ -183,28 +191,28 @@ namespace raftfs {
         			break;
 
         		case perf_createfile:
-        			rtn = client->CreateFile(tmp_node.fullname);
+        			rtn = client->CreateFile(tmp_node->fullname);
         			// Record dir exists or not
         			if(rtn == Status_::kOK) {
-        				if(tmp_node.exists) {
-        					cout << /*result_file <<*/ "ERROR: createfile " << tmp_node.fullname << endl;
+        				if(tmp_node->exists) {
+        					cout << /*result_file <<*/ "ERROR: createfile " << tmp_node->fullname << endl;
         					rtn = -1;
         				} else {
-        					tmp_node.exists = true;	// since we make this file.
+        					tmp_node->exists = true;	// since we make this file.
         				}
         			}
         			break;
 
         		case perf_delete:
-        			rtn = client->Delete(tmp_node.fullname);
+        			rtn = client->Delete(tmp_node->fullname);
         			// Record dir exists or not
         			// TODO: check behavior when delete dir / file not exists...
         			if(rtn == Status_::kOK) {
-        				if(!tmp_node.exists) {
-        					cout << /*result_file <<*/ "ERROR: delete " << tmp_node.fullname << endl;
+        				if(!tmp_node->exists) {
+        					cout << /*result_file <<*/ "ERROR: delete " << tmp_node->fullname << endl;
         					rtn = -1;
         				} else {
-        					tmp_node.exists = false;	// since we delete this dir/file
+        					tmp_node->exists = false;	// since we delete this dir/file
         				}
         			}
         			break;
@@ -215,10 +223,10 @@ namespace raftfs {
         		}
 
         		//-- Result output and recording
-        		rec_result.cmd = next_cmd;
-        		rec_result.err_no = rtn;
-        		rec_result.node = tmp_node.fullname;
-
+        		rec_result->cmd = next_cmd;
+        		rec_result->err_no = rtn;
+        		rec_result->node = tmp_node->fullname;
+        		records.push_back(rec_result);
 
         		// Preparation for next round.
         		cmd_executed++;
@@ -241,6 +249,64 @@ namespace raftfs {
         			<< result->err_no << endl;
         }
 
+        void PerfTest::result_write_all_records() {
+        	for(auto p: records) {
+        		result_file << p->cmd	<< ", "	// TODO: change to cmd string
+            			<< p->node << ", "
+            			<< p->err_no << endl;
+        	}
+        }
+
+        void PerfTest::result_write_stats() {
+        	int64_t num_readonly = 0, num_readwrite = 0,
+        			num_mkdir = 0, num_listdir = 0, num_getinfo = 0,
+        			num_create_file = 0, num_delete = 0;
+        	int64_t cmd_correct = 0;
+
+        	// TODO: write time and stats of this test.
+
+        	for(auto p: records) {
+        		if(p->err_no == 0)	cmd_correct++;
+
+				switch(p->cmd) {
+				case perf_mkdir:
+					num_mkdir++;	num_readwrite++;
+					break;
+
+				case perf_listdir:
+					num_listdir++;	num_readonly++;
+					break;
+
+				case perf_getfinfo:
+					num_getinfo++;	num_readonly++;
+					break;
+
+				case perf_createfile:
+					num_create_file++;	num_readwrite++;
+					break;
+
+				case perf_delete:
+					num_delete++;	num_readwrite++;
+					break;
+
+				default:
+					cout << "ERROR: Wrong command..." << endl;
+					break;
+				}
+        	}
+        	result_file << "------------------------" << endl;
+        	result_file << "total cmds: " << records.size() << endl;
+        	result_file << "correct cmds: " << cmd_correct << endl;
+        	result_file << "Read/Wrrite: " << num_readwrite << " ; ReadOnly: "
+        			<< num_readonly << endl;
+        	result_file << "num of cmds: " << endl;
+        	result_file << "\t mkdir: " << num_mkdir << endl;
+        	result_file << "\t createfile: " << num_create_file << endl;
+        	result_file << "\t delete: " << num_delete << endl;
+        	result_file << "\t listdir: " << num_listdir << endl;
+        	result_file << "\t getinfor: " << num_getinfo << endl;
+
+        }
 #if(0)	// Functions in FSClient that we may need to overload...
         bool PerfTest::ConnectFollower() {
         int32_t PerfTest::GetLeader() {
