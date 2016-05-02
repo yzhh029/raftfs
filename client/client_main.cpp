@@ -5,6 +5,8 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <atomic>
+#include <mutex>
 #include "RaftFS.h"
 #include "../utils/Options.h"
 #include "PerfTest.h"
@@ -16,6 +18,28 @@ using namespace raftfs;
 using namespace raftfs::client;
 
 #define TEST_MODULE_ENABLE	1
+
+mutex m;
+bool init = true;
+
+void test_thread(Options* opt, PerfTest::PerfTestParameters param) {
+
+    FSClient client(*opt);
+    PerfTest ptest1(&client, &param);
+
+    {
+        lock_guard<mutex> lock(m);
+
+        ptest1.create_test_tree(2, init);
+        if (init)
+            init = false;
+    }
+
+    ptest1.result_write_head();
+    ptest1.run();
+    ptest1.result_write_stats();
+}
+
 
 int main(int argc, char** argv) {
 
@@ -55,21 +79,35 @@ int main(int argc, char** argv) {
 typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
-    para.filename = "perf_test_1.log";
     para.max_cmds = 1000;
     // Read / Write
     para.cmd_ratio[pcmd_type::perf_mkdir] = 0;
     para.cmd_ratio[pcmd_type::perf_createfile] = 0;
     para.cmd_ratio[pcmd_type::perf_delete] = 0;
     // Read Only
-    para.cmd_ratio[pcmd_type::perf_listdir] = 50;
-    para.cmd_ratio[pcmd_type::perf_getfinfo] = 50;
+    para.cmd_ratio[pcmd_type::perf_listdir] = 30;
+    para.cmd_ratio[pcmd_type::perf_getfinfo] = 70;
+    /*
     PerfTest ptest1(&client, &para);
 
     ptest1.create_test_tree(2);
     ptest1.result_write_head();
     ptest1.run();
-    ptest1.result_write_stats();
+    ptest1.result_write_stats();*/
+
+    vector<thread> tester;
+
+    int client_num = 4;
+
+    for (int i = 0; i < client_num; ++i) {
+        para.filename = to_string(i) + "perf_test.log";
+        tester.push_back(thread(test_thread, &opt, para));
+    }
+
+    for (auto& t: tester) {
+        t.join();
+    }
+
 #endif
 
     return 0;

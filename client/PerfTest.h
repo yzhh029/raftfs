@@ -75,7 +75,7 @@ namespace raftfs {
             ~PerfTest();
             void run();		// main entry
 
-            void create_test_tree(int test_case);
+            void create_test_tree(int test_case, bool do_rpc);
             void result_write_head();
             void result_write_line(PerfTestRec * result);
             void result_write_all_records();

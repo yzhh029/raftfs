@@ -78,7 +78,7 @@ namespace raftfs {
             }
         }
 
-        void PerfTest::create_test_tree(int test_case) {
+        void PerfTest::create_test_tree(int test_case, bool do_rpc) {
             switch (test_case) {
                 case 1: {
                     PerfTestNode *dir1 = new PerfTestNode(nullptr, "/dir1");
@@ -110,17 +110,21 @@ namespace raftfs {
                     cout << "initializing test case 2" << endl;
 
                     PerfTestNode *dir1 = new PerfTestNode(nullptr, "/read");
-                    assert(Status_::kOK == client->Mkdir("/read"));
                     dir1->should_exist = true;
                     PerfTestNode *file11 = new PerfTestNode(dir1, "/read/file11");
-                    assert(Status_::kOK == client->CreateFile("/read/file11"));
                     file11->should_exist = true;
                     PerfTestNode *file12 = new PerfTestNode(dir1, "/read/file12");
-                    assert(Status_::kOK == client->CreateFile("/read/file12"));
                     file12->should_exist = true;
                     PerfTestNode *file13 = new PerfTestNode(dir1, "/read/file13");
-                    assert(Status_::kOK == client->CreateFile("/read/file13"));
                     file13->should_exist = true;
+
+                    if (do_rpc) {
+                        assert(Status_::kOK == client->Mkdir("/read"));
+                        assert(Status_::kOK == client->CreateFile("/read/file11"));
+                        assert(Status_::kOK == client->CreateFile("/read/file12"));
+                        assert(Status_::kOK == client->CreateFile("/read/file13"));
+                    }
+
 
                     vector<string> list;
                     client->ListDir("/read", list);
@@ -134,7 +138,8 @@ namespace raftfs {
                     read_tree.push_back(file13);
 
                     PerfTestNode *dir2 = new PerfTestNode(nullptr, "/write");
-                    assert(Status_::kOK == client->Mkdir("/write"));
+                    if (do_rpc)
+                        assert(Status_::kOK == client->Mkdir("/write"));
                     dir2->should_exist = true;
                     write_tree.push_back(dir2);
 
