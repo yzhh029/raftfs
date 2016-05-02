@@ -139,7 +139,12 @@ namespace raftfs {
 
                     PerfTestNode *dir2 = new PerfTestNode(nullptr, "/write");
                     if (do_rpc)
-                        assert(Status_::kOK == client->Mkdir("/write"));
+                    {
+                    	int tmp_sta = client->Mkdir("/write");
+                    	cout << tmp_sta << endl;
+                    	// Have problem here if create...
+                    	assert(Status_::kOK == client->Mkdir("/write"));
+                    }
                     dir2->should_exist = true;
                     write_tree.push_back(dir2);
 
@@ -200,7 +205,7 @@ namespace raftfs {
                 int i;
                 switch (next_cmd) {
                     case perf_mkdir:
-                        i = 4;
+                        i = 1;
                         do {
                             tmp_node = write_tree[i];
                             ++i;
@@ -233,7 +238,7 @@ namespace raftfs {
                         tmp_node = read_tree[0];
                         break;
                     default:
-                        ;
+                        break;
                 }
 
                 int rtn = Status_::kOK;
@@ -362,27 +367,22 @@ namespace raftfs {
                 switch (p->cmd) {
                     case perf_mkdir:
                         num_mkdir++;
-                        //num_readwrite++;
                         break;
 
                     case perf_listdir:
                         num_listdir++;
-                        //num_readonly++;
                         break;
 
                     case perf_getfinfo:
                         num_getinfo++;
-                        //num_readonly++;
                         break;
 
                     case perf_createfile:
                         num_create_file++;
-                        //num_readwrite++;
                         break;
 
                     case perf_delete:
                         num_delete++;
-                        //num_readwrite++;
                         break;
 
                     default:
