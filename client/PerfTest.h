@@ -127,6 +127,7 @@ namespace raftfs {
             //-------------------------------------
             // Test Running datas
             int cmd_ratio[perf_cmd_max];			// theory value
+            int cmd_limit[perf_cmd_max];
             int cmd_count[perf_cmd_max];
             int cmd_cumulated_gate[perf_cmd_max];	// for runtime execution.
             int64_t	cmd_total_to_run;

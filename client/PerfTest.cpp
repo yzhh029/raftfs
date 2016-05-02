@@ -7,6 +7,9 @@
 #include "PerfTest.h"
 #include <vector>
 #include <fstream>
+#include <cmath>
+#include <functional>
+#include <numeric>
 #include <iomanip>      // std::put_time
 #include <ctime>        // std::time_t, struct std::tm, std::localtime
 #include <chrono>       // std::chrono::system_clock
@@ -38,17 +41,20 @@ namespace raftfs {
             result_file.open(paras->filename, std::fstream::out | fstream::trunc);
             assert(result_file.is_open());        // file can not be opened.
 
+            // Maximum Filesystem / Metadata commands to be executed.
+            this->cmd_total_to_run = paras->max_cmds;
+
             // Copy cmd_ratios
             int acc = 0;
             for (int i = 0; i < perf_cmd_max; ++i) {
-                cmd_ratio[i] = paras->cmd_ratio[i];
+                /*cmd_ratio[i] = paras->cmd_ratio[i];
                 cmd_cumulated_gate[i] = acc + paras->cmd_ratio[i];
-                acc += paras->cmd_ratio[i];
+                acc += paras->cmd_ratio[i];*/
                 cmd_count[i] = 0;
+                cmd_limit[i] = cmd_total_to_run * (paras->cmd_ratio[i] / (100.0));
             }
-            assert(acc <= 100);        // accumulated cmd ratio should be 100!
-            // Maximum Filesystem / Metadata commands to be executed.
-            this->cmd_total_to_run = paras->max_cmds;
+            int sum = std::accumulate(begin(cmd_limit), end(cmd_limit), 0, std::plus<int>());        // accumulated cmd ratio should be 100!
+            assert(sum <= cmd_total_to_run);
 
             // Other init.
             std::srand(std::time(0));
@@ -179,21 +185,13 @@ namespace raftfs {
                 do {
                     next_cmd = rand() % perf_cmd_max;
                     tmp_count = cmd_count[next_cmd] + 1;
-
-                } while ((tmp_count / static_cast<double>(cmd_total_to_run)) > (this->cmd_ratio[next_cmd]/ 100.0));
-                /*
-                tmp = std::rand() % 100;
-                for (int i = 0; i < perf_cmd_max; ++i) {
-                    if (tmp < this->cmd_cumulated_gate[i]) {
-                        next_cmd = i;
-                        break;
-                    }
-                }
-                 */
+                } while (tmp_count > cmd_limit[next_cmd]);
 
                 PerfTestRec *rec_result = new PerfTestRec();
 
                 PerfTestNode* tmp_node = nullptr;
+
+                // set cmd parameter
                 int i;
                 switch (next_cmd) {
                     case perf_mkdir:
@@ -232,17 +230,7 @@ namespace raftfs {
                     default:
                         ;
                 }
-                /*
-#if(1)
 
-                PerfTestNode *tmp_node = test_tree[test_node_index % test_tree.size()];
-#else
-                PerfTestNode tmp_node(nullptr, "/dir1");		// TODO: get from array / vector
-#endif
-                */
-
-
-                //Status_ rtn = Status_::kOK;
                 int rtn = Status_::kOK;
                 //----------------------------------------------
                 // Run commands
@@ -254,12 +242,7 @@ namespace raftfs {
                 kExist = 4,
                 kCommError = 5
                 */
-                /*
-                cout << "cmd: " << next_cmd << " name: " <<
-                        tmp_node.fullname << " client " << client << endl;
-                client->Mkdir(tmp_node.fullname);
-                cout << "cmd: " << next_cmd << " client " << client << endl;
-                */
+
                 // FIXME: Assume we send to leader first via FSClient interface.
                 switch (next_cmd) {
                     case perf_mkdir: {
@@ -374,27 +357,27 @@ namespace raftfs {
                 switch (p->cmd) {
                     case perf_mkdir:
                         num_mkdir++;
-                        num_readwrite++;
+                        //num_readwrite++;
                         break;
 
                     case perf_listdir:
                         num_listdir++;
-                        num_readonly++;
+                        //num_readonly++;
                         break;
 
                     case perf_getfinfo:
                         num_getinfo++;
-                        num_readonly++;
+                        //num_readonly++;
                         break;
 
                     case perf_createfile:
                         num_create_file++;
-                        num_readwrite++;
+                        //num_readwrite++;
                         break;
 
                     case perf_delete:
                         num_delete++;
-                        num_readwrite++;
+                        //num_readwrite++;
                         break;
 
                     default:
@@ -405,24 +388,28 @@ namespace raftfs {
             result_file << "------------------------" << endl;
             //result_file << "total cmds: " << records.size() << endl;
             result_file << "total cmds: " << read_count + write_count << endl;
-            result_file << "avg latency: " << duration_cast<milliseconds>(total_read_latency + total_write_latency).count()
-                    / static_cast<double>(read_count + write_count) << endl;
+            result_file << "avg latency: " <<
+            duration_cast<milliseconds>(total_read_latency + total_write_latency).count()
+            / static_cast<double>(read_count + write_count) << endl;
             result_file << "correct cmds: " << cmd_correct << endl;
+            if (read_count) {
             result_file << "total read cmds: " << read_count << endl;
             result_file << "avg read latency: " << duration_cast<milliseconds>(total_read_latency).count()
-                                              / static_cast<double>(read_count) << endl;
-            result_file << "total write cmds: " << write_count << endl;
-            result_file << "read/write ratio: " << read_count/ static_cast<double>(write_count) << endl;
-            result_file << "avg write latency: " << duration_cast<milliseconds>(total_write_latency).count()
-                    / static_cast<double>(write_count);
+                                                   / static_cast<double>(read_count) << endl;
+            }
+            if (write_count) {
+                result_file << "total write cmds: " << write_count << endl;
+                result_file << "avg write latency: " << duration_cast<milliseconds>(total_write_latency).count()
+                                                        / static_cast<double>(write_count) << endl;
+            }
+            if (read_count && write_count)
+                result_file << "read/write ratio: " << read_count / static_cast<double>(write_count) << endl;
 
-            //result_file << "Read/Wrrite: " << num_readwrite << " ; ReadOnly: "
-            //<< num_readonly << endl;
             result_file << "\t mkdir: " << num_mkdir << endl;
             result_file << "\t createfile: " << num_create_file << endl;
             result_file << "\t delete: " << num_delete << endl;
             result_file << "\t listdir: " << num_listdir << endl;
-            result_file << "\t getinfor: " << num_getinfo << endl;
+            result_file << "\t getinfo: " << num_getinfo << endl;
 
         }
 

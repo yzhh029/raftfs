@@ -56,19 +56,20 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
     para.filename = "perf_test_1.log";
-    para.max_cmds = 10;
+    para.max_cmds = 1000;
     // Read / Write
     para.cmd_ratio[pcmd_type::perf_mkdir] = 0;
     para.cmd_ratio[pcmd_type::perf_createfile] = 0;
     para.cmd_ratio[pcmd_type::perf_delete] = 0;
     // Read Only
-    para.cmd_ratio[pcmd_type::perf_listdir] = 25;
-    para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;
+    para.cmd_ratio[pcmd_type::perf_listdir] = 50;
+    para.cmd_ratio[pcmd_type::perf_getfinfo] = 50;
     PerfTest ptest1(&client, &para);
 
     ptest1.create_test_tree(2);
     ptest1.result_write_head();
     ptest1.run();
+    ptest1.result_write_stats();
 #endif
 
     return 0;
