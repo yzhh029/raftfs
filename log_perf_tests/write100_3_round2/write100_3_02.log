@@ -1,0 +1,15 @@
+Test on: Wed May  4 15:17:50 2016
+
+------------------------
+total cmds: 500
+avg latency: 3.76
+correct cmds: 283
+total write cmds: 500
+avg write latency: 3.76
+correct write cmds: 283
+avg correct write latency: 6.48057
+	 mkdir: 100
+	 createfile: 150
+	 delete: 250
+	 listdir: 0
+	 getinfo: 0
