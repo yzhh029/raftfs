@@ -97,26 +97,26 @@ namespace raftfs {
 
         Status_ FSClient::Mkdir(const string &abs_dir) {
 
-            auto start = chrono::system_clock::now();
+            //auto start = chrono::system_clock::now();
             if (GetLeader() == -1) {
                 return Status::kNoLeader;
             }
             if (!leader_rpc) {
                 ResetRPCClient(leader_rpc, leader_sock, hosts[leader_id - 1]);
             }
-            cout << "do mkdir " << endl;
+            //cout << "do mkdir " << endl;
             MkdirRequest req;
             req.path = abs_dir;
             MkdirResponse resp;
-            cout << leader_sock->getHost() << " " << hosts[leader_id - 1] << endl;
+            //cout << leader_sock->getHost() << " " << hosts[leader_id - 1] << endl;
             try {
                 leader_rpc->Mkdir(resp, req);
             } catch (TTransportException e) {
                 return Status::kCommError;
             }
 
-            auto end = chrono::system_clock::now();
-            cout << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
+            //auto end = chrono::system_clock::now();
+            //cout << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
             return resp.status;
         }
 

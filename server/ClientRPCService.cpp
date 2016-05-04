@@ -97,6 +97,7 @@ namespace raftfs {
 
             if (!fs.GetFileInfo(file.file, _return.info)) {
                 _return.status = Status::kNotFound;
+                return;
             }
             _return.status = Status::kOK;
         }

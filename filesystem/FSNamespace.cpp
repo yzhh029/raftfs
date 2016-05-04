@@ -48,7 +48,7 @@ namespace raftfs {
             return !path.empty() && path[0] == '/';
         }
 
-
+        // not thread safe
         std::vector<std::string> FSNamespace::SplitPath(string abs_path) const {
             vector<string> dir_split;
             boost::split(dir_split, abs_path, boost::is_any_of("/"));
@@ -56,7 +56,7 @@ namespace raftfs {
             return dir_split;
         }
 
-
+        // not thread safe
         pair<INodeDirectory *, string> FSNamespace::GetParentFolderAndChild(const string &abs_path) const {
 
             if (abs_path == "/" ) {
@@ -66,6 +66,7 @@ namespace raftfs {
             auto dir_split = SplitPath(abs_path);
             auto current = root.get();
 
+            // lock_guard<mutex> guard(m);
             for (int i = 0; i < dir_split.size() - 1; ++i) {
                 auto next = current->GetChild(dir_split[i]);
                 if (next && next->IsDir()) {
@@ -78,7 +79,6 @@ namespace raftfs {
         }
 
         bool FSNamespace::MakeDir(const string abs_dir, const std::string &owner, bool make_parents) {
-            std::lock_guard<std::mutex> guard(m);
             INodeDirectory* current = root.get();
 
             // todo find other way to validate path
@@ -87,6 +87,8 @@ namespace raftfs {
             auto dir_split = SplitPath(abs_dir);
 
             int new_dir = 0, i;
+
+            std::lock_guard<std::mutex> guard(m);
 
             for (i = 0; i < dir_split.size(); ++i) {
                 // dir exist

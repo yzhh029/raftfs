@@ -242,6 +242,7 @@ namespace raftfs {
             return static_cast<INodeDirectory *>(dir);
         }
 
+        // child must exist
         bool INodeDirectory::DeleteChild(const std::string &child_name, bool recursive) {
 
             lock_guard<mutex> lock(m);
@@ -249,10 +250,13 @@ namespace raftfs {
                 return child_name == i->GetName();
             });
 
+            // if child is a non empty directory
             if ((*it)->IsDir() && !static_pointer_cast<INodeDirectory>(*it)->IsEmpty()) {
                 if (!recursive || !static_pointer_cast<INodeDirectory>(*it)->DeleteAllChild()) {
                     return false;
                 }
+            } else {
+                return false;
             }
 
             //cout << " deleting " << (*it)->GetName() << endl;
@@ -266,6 +270,7 @@ namespace raftfs {
 
 
         // assume dir is not empty
+        // not thread safe
         bool INodeDirectory::DeleteAllChild() {
 
             while (!IsEmpty()) {
