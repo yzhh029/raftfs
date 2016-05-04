@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
-    para.max_cmds = 10;
+    para.max_cmds = 50;
 #if(0)
     // Read / Write : 50%
     para.cmd_ratio[pcmd_type::perf_mkdir] = 10;
@@ -116,7 +116,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     vector<thread> tester;
 
-    int client_num = 1	;
+    int client_num = 2	;
 
     for (int i = 0; i < client_num; ++i) {
         para.filename = to_string(i) + "perf_test.log";

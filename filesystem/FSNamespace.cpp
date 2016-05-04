@@ -169,7 +169,9 @@ namespace raftfs {
             auto parent_child = GetParentFolderAndChild(file_name);
 
             if (parent_child.first && !parent_child.second.empty()) {
-                return parent_child.first->DeleteChild(parent_child.second, false);
+                auto target = parent_child.first->GetChild(parent_child.second);
+                if (target && target->IsFile() && (target->GetOwner() == visitor || target->GetOwner() == "unknown"))
+                    return parent_child.first->DeleteChild(parent_child.second, false);
             }
             return false;
         }

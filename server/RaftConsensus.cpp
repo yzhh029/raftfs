@@ -196,11 +196,13 @@ namespace raftfs {
                                         }
                                     }
                                     // debug
-                                    cout << "log: " << log << endl;
+                                    //cout << "log: " << log << endl;
 
                                     // update commit index
                                     if (commit_index != new_commit) {
                                         log.SetLastCommitIndex(new_commit);
+                                        cout << TimePointStr(Now()) << " new log commit index " << new_commit << endl;
+                                        cout << "log: " << endl << log << endl;
                                         fs_commit.notify_all();
                                     }
                                 } else {
@@ -301,6 +303,7 @@ namespace raftfs {
                 for (int64_t i = fs->GetCommitedIndex() + 1; i <= log.GetLastCommitIndex(); ++i) {
                     if ((IsLeader() && pending_entries[i].size() >= quorum_size) || IsFollower()) {
                         const Entry* e = log.GetEntry(i);
+                        cout << TimePointStr(Now()) << " FS try apply " << e->index << " " << OpToStr(e->op) << " " << e->value << endl;
                         switch (e->op) {
                             case MetaOp::kMkdir: {
                                 // todo maybe add another entry field called client/operator
