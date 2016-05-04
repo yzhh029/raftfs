@@ -223,12 +223,32 @@ namespace raftfs {
             root->Print(1);
         }
 
-
         std::ostream &operator<<(std::ostream &os, const FSNamespace &fs) {
             auto curr = fs.root;
 
             return os;
         }
+
+
+        std::string OpToStr(const MetaOp::type op) {
+            switch (op) {
+                case MetaOp::kCreate:
+                    return string("CreateFile");
+                case MetaOp::kDelete:
+                    return string("DeleteFile");
+                case MetaOp::kMkdir:
+                    return string("MKDir");
+                case MetaOp::kRmdir:
+                    return string("RMDir");
+                case MetaOp::kGetFileInfo:
+                    return string("FileInfo");
+                case MetaOp::kListDir:
+                    return string("ListDir");
+                default:
+                    return string("Noop");
+            }
+        }
+
 
     } // namespace raftfs::filesystem
 } // namespace raftfs

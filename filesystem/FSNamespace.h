@@ -20,6 +20,8 @@
 namespace raftfs {
     namespace filesystem {
 
+        std::string OpToStr(const protocol::MetaOp::type op);
+
         class FSNamespace {
 
         public:
@@ -35,7 +37,6 @@ namespace raftfs {
              * i.e. start with "/"
              */
 			static bool ValidatePath(const std::string &path);
-
             bool MakeDir(const std::string abs_dir, const std::string &owner, bool make_parents);
             bool DeleteDir(const std::string &abs_dir, const std::string &visitor, bool recursive);
 

@@ -310,17 +310,17 @@ namespace raftfs {
                             }
                             case MetaOp::kRmdir: {
                                 fs->DeleteDir(e->value, string("unknown"), true);
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << "rmdir " << e->value << endl;
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " rmdir " << e->value << endl;
                                 break;
                             }
                             case MetaOp::kCreate: {
                                 fs->CreateFile(e->value, string("unknown"));
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << "create file " << e->value << endl;
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " create file " << e->value << endl;
                                 break;
                             }
                             case MetaOp::kDelete: {
                                 fs->RemoveFile(e->value, string("unknown"));
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << "delete file " << e->value << endl;
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " delete file " << e->value << endl;
                                 break;
                             }
                             default:
@@ -332,6 +332,7 @@ namespace raftfs {
                         break;
                     }
                 }
+                cout << TimePointStr(Now()) << " FS committed " << commited - fs->GetCommitedIndex() << " entries" << endl;
                 fs->SetCommitedIndex(commited);
                 //cout << "fs update wake up commit " << log.GetLastCommitIndex() << " last " << log.GetLastLogIndex() << endl;
                 if (IsLeader())

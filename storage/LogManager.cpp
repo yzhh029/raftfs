@@ -7,12 +7,14 @@
  */
 
 #include "LogManager.h"
+#include "../filesystem/FSNamespace.h"
 #include <iostream>
 #include <mutex>
 #include <algorithm>
 #include <iomanip>
 
 using namespace std;
+using namespace raftfs::filesystem;
 
 namespace raftfs {
     namespace server {    // FIXME: put this under server first
@@ -240,20 +242,12 @@ namespace raftfs {
 
 
         std::ostream &operator<<(std::ostream &os, const LogManager &lm) {
-            cout << endl << "term : ";
-            for (auto& e : lm.memory_log) {
-                cout << setw(2) << e->term << " ";
+            auto it = lm.memory_log.begin();
+            if (lm.memory_log.back()->index > 10)
+                it = lm.memory_log.end() - 10;
+            for (; it != lm.memory_log.end(); ++it) {
+                cout << (*it)->term << " " << (*it)->index << " " << OpToStr((*it)->op) << " " << (*it)->value << endl;
             }
-
-            cout << endl << "index: ";
-            for (auto& e : lm.memory_log) {
-                cout << setw(2) << e->index << " ";
-            }
-            cout << endl << "value: ";
-            for (auto&e : lm.memory_log) {
-                cout << setw(2) << e->op << " ";
-            }
-            cout << endl;
             return os;
         }
 

@@ -255,8 +255,6 @@ namespace raftfs {
                 if (!recursive || !static_pointer_cast<INodeDirectory>(*it)->DeleteAllChild()) {
                     return false;
                 }
-            } else {
-                return false;
             }
 
             //cout << " deleting " << (*it)->GetName() << endl;
