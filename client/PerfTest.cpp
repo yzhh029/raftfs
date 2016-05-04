@@ -183,6 +183,7 @@ namespace raftfs {
             std::vector<std::string> tmp_dir_list;
             FileInfo tmp_file_info;
             int test_node_index = 0;
+            int no_valid_cmd_cnt = 0;
 
             cout << "Perf Test Begin: " << endl;
 
@@ -197,50 +198,70 @@ namespace raftfs {
                     tmp_count = cmd_count[next_cmd] + 1;
                 } while (tmp_count > cmd_limit[next_cmd]);
 
-                PerfTestRec *rec_result = new PerfTestRec();
+                if(no_valid_cmd_cnt > 1000) {
+                	cout << "No valid commands to run!! (Won't have commands that can return true)" << endl;
+                	cout << "Last invalid command: " << next_cmd << endl;
+                	cout << "Write tree: " << write_tree.size() << endl;
+					#if(0)
+                	for(auto p: write_tree) {
+                		cout << p->should_exist << " ";
+                	}
+					#endif
+                	cout << "Force the test to stop here!!" << endl;
+                	break;
+                }
 
                 PerfTestNode* tmp_node = nullptr;
 
                 // set cmd parameter
                 int i;
                 switch (next_cmd) {
-                    case perf_mkdir:
+                    case perf_mkdir:	// 0
                         i = 1;
                         do {
                             tmp_node = write_tree[i];
+                            //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
                             ++i;
                         } while (i < write_tree.size() && tmp_node->should_exist);
-                        if (i == write_tree.size())
+                        if (i == write_tree.size()) {
+                        	no_valid_cmd_cnt++;
                             continue;
+                        }
                         break;
-                    case perf_createfile:
+                    case perf_createfile:	// 3
                         i = 1;
                         do {
                             tmp_node = write_tree[i];
+                            //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
                             ++i;
-                        } while (i < 4 && tmp_node->should_exist);
-                        if (i == 4)
+                        } while (i < write_tree.size() && tmp_node->should_exist);
+                        if (i == 4) {
+                        	no_valid_cmd_cnt++;
                             continue;
+                        }
                         break;
-                    case perf_delete:
+                    case perf_delete:	// 4
                         i = 1;
                         do {
                             tmp_node = write_tree[i];
+                            //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
                             ++i;
                         } while (i < write_tree.size() && !tmp_node->should_exist);
-                        if (i == write_tree.size())
+                        if (i == write_tree.size()) {
+                        	no_valid_cmd_cnt++;
                             continue;
+                        }
                         break;
-                    case perf_getfinfo:
+                    case perf_getfinfo:	// 2
                         tmp_node = read_tree[1];
                         break;
-                    case perf_listdir:
+                    case perf_listdir:	// 1
                         tmp_node = read_tree[0];
                         break;
                     default:
                         break;
                 }
-
+                no_valid_cmd_cnt = 0;
                 int rtn = Status_::kOK;
                 //----------------------------------------------
                 // Run commands
@@ -253,16 +274,26 @@ namespace raftfs {
                 kCommError = 5
                 */
 
+                PerfTestRec *rec_result = new PerfTestRec();	// here for safety.
+
+                //cout << "Enter switch: (after logic check): " << next_cmd << endl;	// debug usage
+
                 // FIXME: Assume we send to leader first via FSClient interface.
+                chrono::system_clock::duration tmp_dura;
                 switch (next_cmd) {
                     case perf_mkdir: {
-
                         Tp start = Now();
                         rtn = client->Mkdir(tmp_node->fullname);
-                        total_write_latency += Now() - start;
+                        tmp_dura = Now() - start;
+                        //total_write_latency += Now() - start;
+                        total_write_latency += tmp_dura;
                         ++write_count;
+                        if(rtn == Status_::kOK) {	// acc correct write latency
+                        	correct_write_count++;
+                        	correct_write_latency += tmp_dura;
+                        }
                         // Record dir exists or not
-
+                        cout << "mkdir " << tmp_node->fullname << " done " << endl;	// debug usage
                         tmp_node->should_exist = (rtn == Status_::kOK);
 
                         break;
@@ -272,6 +303,7 @@ namespace raftfs {
                         rtn = client->ListDir(tmp_node->fullname, tmp_dir_list);
                         total_read_latency += Now() - start;
                         ++read_count;
+                        cout << "listdir done " << endl;	// debug usagel
                         // Record dir exists or not
                         tmp_node->should_exist = (rtn == Status_::kOK);
                         break;
@@ -288,21 +320,33 @@ namespace raftfs {
                     }
                     case perf_createfile: {
                         Tp start = Now();
-
                         rtn = client->CreateFile(tmp_node->fullname);
-                        total_write_latency += Now() - start;
+                        //total_write_latency += Now() - start;
+                        tmp_dura = Now() - start;
+                        total_write_latency += tmp_dura;
                         ++write_count;
+                        if(rtn == Status_::kOK) {	// acc correct write latency
+                        	correct_write_count++;
+                        	correct_write_latency += tmp_dura;
+                        }
+                        cout << "createfile " << tmp_node->fullname << " done " << endl;	// debug usage
                         tmp_node->should_exist = (rtn == Status_::kOK);
 
                         break;
                     }
                     case perf_delete: {
                         Tp start = Now();
-
                         rtn = client->Delete(tmp_node->fullname);
-                        total_write_latency += Now() - start;
+                        //total_write_latency += Now() - start;
+                        tmp_dura = Now() - start;
+                        total_write_latency += tmp_dura;
+                        if(rtn == Status_::kOK) {	// acc correct write latency
+                        	correct_write_count++;
+                        	correct_write_latency += tmp_dura;
+                        }
                         ++write_count;
-                        // Record dir exists or not
+                        // Record dir exist
+                        cout << "delete " << tmp_node->fullname << " done " << endl;	// debug usages or not
                         // TODO: check behavior when delete dir / file not exists...
                         tmp_node->should_exist = !(rtn == Status_::kOK);
 
@@ -328,6 +372,12 @@ namespace raftfs {
             }
 
             cout << "test finished" << endl;
+			// Print write tree status to verify server side result manually.
+            cout << endl << "Write tree status to verify server status:" << endl;
+			for(auto p: write_tree) {
+				cout << p->fullname << ": " << p->should_exist << endl;
+			}
+
         }
 
         void PerfTest::result_write_head() {
@@ -406,6 +456,9 @@ namespace raftfs {
                 result_file << "total write cmds: " << write_count << endl;
                 result_file << "avg write latency: " << duration_cast<milliseconds>(total_write_latency).count()
                                                         / static_cast<double>(write_count) << endl;
+                result_file << "correct write cmds: " << correct_write_count << endl;
+                result_file << "avg correct write latency: " << duration_cast<milliseconds>(correct_write_latency).count()
+                                                        / static_cast<double>(correct_write_count) << endl;
             }
             if (read_count && write_count)
                 result_file << "read/write ratio: " << read_count / static_cast<double>(write_count) << endl;

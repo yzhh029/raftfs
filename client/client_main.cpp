@@ -80,13 +80,32 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
     para.max_cmds = 1000;
-    // Read / Write
+#if(0)
+    // Read / Write : 50%
+    para.cmd_ratio[pcmd_type::perf_mkdir] = 10;
+    para.cmd_ratio[pcmd_type::perf_createfile] = 15;
+    para.cmd_ratio[pcmd_type::perf_delete] = 25;
+    // Read Only : 50%
+    para.cmd_ratio[pcmd_type::perf_listdir] = 25;
+    para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;
+#elif(1)
+    // Read / Write 100
+    para.cmd_ratio[pcmd_type::perf_mkdir] = 20;
+    para.cmd_ratio[pcmd_type::perf_createfile] = 30;
+    para.cmd_ratio[pcmd_type::perf_delete] = 50;
+    // Read Only
+    para.cmd_ratio[pcmd_type::perf_listdir] = 0;
+    para.cmd_ratio[pcmd_type::perf_getfinfo] = 0;
+#else
+    // Read / Write : 0%
     para.cmd_ratio[pcmd_type::perf_mkdir] = 0;
     para.cmd_ratio[pcmd_type::perf_createfile] = 0;
     para.cmd_ratio[pcmd_type::perf_delete] = 0;
     // Read Only
     para.cmd_ratio[pcmd_type::perf_listdir] = 30;
     para.cmd_ratio[pcmd_type::perf_getfinfo] = 70;
+#endif
+
     /*
     PerfTest ptest1(&client, &para);
 
@@ -97,7 +116,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     vector<thread> tester;
 
-    int client_num = 4;
+    int client_num = 1	;
 
     for (int i = 0; i < client_num; ++i) {
         para.filename = to_string(i) + "perf_test.log";

@@ -108,6 +108,8 @@ namespace raftfs {
             int64_t read_count = 0;
             chrono::system_clock::duration total_write_latency; // in us
             int64_t write_count = 0;
+            chrono::system_clock::duration correct_write_latency; // in us
+            int64_t correct_write_count = 0;
         private:
             /*
             int32_t GetLeader();
