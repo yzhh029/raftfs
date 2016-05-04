@@ -1,0 +1,16 @@
+Test on: Wed May  4 14:16:37 2016
+
+------------------------
+total cmds: 1000
+avg latency: 3.47
+correct cmds: 813
+total read cmds: 500
+avg read latency: 0.316
+total write cmds: 500
+avg write latency: 6.624
+read/write ratio: 1
+	 mkdir: 100
+	 createfile: 150
+	 delete: 250
+	 listdir: 250
+	 getinfo: 250

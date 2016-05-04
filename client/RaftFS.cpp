@@ -70,7 +70,13 @@ namespace raftfs {
                 follower_rpc->GetLeader(resp);
                 if (resp.status == Status::kOK) {
                     leader_id = resp.leader_id;
-                    cout << " new leader is " << leader_id << " " << hosts[leader_id - 1] << endl;
+                    cout << " new leader is " << leader_id << " " << hosts.size() << endl;
+                    if(leader_id > hosts.size())  {
+                    	cout << "ERROR: leader_id is larger than listed in host file!!" << endl;
+                    	cout << "Please check if the correct hostfile is used!!" << endl;
+                    	assert(leader_id <= hosts.size());
+                    }
+                    cout << hosts[leader_id - 1] << endl;
                     ResetRPCClient(leader_rpc, leader_sock, hosts[leader_id - 1]);
 
                     // if current follower and leader are the same host
