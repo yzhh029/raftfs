@@ -304,26 +304,27 @@ namespace raftfs {
                     if ((IsLeader() && pending_entries[i].size() >= quorum_size) || IsFollower()) {
                         const Entry* e = log.GetEntry(i);
                         cout << TimePointStr(Now()) << " FS try apply " << e->index << " " << OpToStr(e->op) << " " << e->value << endl;
+                        bool rt;
                         switch (e->op) {
                             case MetaOp::kMkdir: {
                                 // todo maybe add another entry field called client/operator
-                                fs->MakeDir(e->value, string("unknown"), true);
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << " mkdir " << e->value << endl;
+                                rt = fs->MakeDir(e->value, string("unknown"), true);
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " mkdir " << e->value << " " << rt << endl;
                                 break;
                             }
                             case MetaOp::kRmdir: {
-                                fs->DeleteDir(e->value, string("unknown"), true);
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << " rmdir " << e->value << endl;
+                                rt = fs->DeleteDir(e->value, string("unknown"), true);
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " rmdir " << e->value << " " << rt << endl;
                                 break;
                             }
                             case MetaOp::kCreate: {
-                                fs->CreateFile(e->value, string("unknown"));
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << " create file " << e->value << endl;
+                                rt = fs->CreateFile(e->value, string("unknown"));
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " create file " << e->value << " " << rt << endl;
                                 break;
                             }
                             case MetaOp::kDelete: {
-                                fs->RemoveFile(e->value, string("unknown"));
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << " delete file " << e->value << endl;
+                                rt = fs->RemoveFile(e->value, string("unknown"));
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " delete file " << e->value << " " << rt << endl;
                                 break;
                             }
                             default:

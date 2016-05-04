@@ -132,10 +132,10 @@ namespace raftfs {
                         cout << l << endl;
                     }
 
-                    read_tree.push_back(dir1);
+                    read_tree.push_back(dir1); //0
                     read_tree.push_back(file11);
                     read_tree.push_back(file12);
-                    read_tree.push_back(file13);
+                    read_tree.push_back(file13); //3
 
                     PerfTestNode *dir2 = new PerfTestNode(nullptr, "/write");
                     if (do_rpc)
@@ -146,22 +146,22 @@ namespace raftfs {
                     	assert(Status_::kOK == client->Mkdir("/write"));
                     }
                     dir2->should_exist = true;
-                    write_tree.push_back(dir2);
+                    write_tree.push_back(dir2); //0
 
                     PerfTestNode *file21 = new PerfTestNode(dir1, "/write/file21");
                     PerfTestNode *file22 = new PerfTestNode(dir1, "/write/file22");
                     PerfTestNode *file23 = new PerfTestNode(dir1, "/write/file23");
 
-                    write_tree.push_back(file21);
+                    write_tree.push_back(file21); //1
                     write_tree.push_back(file22);
-                    write_tree.push_back(file23);
+                    write_tree.push_back(file23); //3
 
-                    PerfTestNode *dir21 = new PerfTestNode(dir2, "/dir1/dir21");
-                    PerfTestNode *dir22 = new PerfTestNode(dir2, "/dir1/dir22");
-                    PerfTestNode *dir23 = new PerfTestNode(dir2, "/dir1/dir23");
-                    test_tree.push_back(dir21);
+                    PerfTestNode *dir21 = new PerfTestNode(dir2, "/write/dir21");
+                    PerfTestNode *dir22 = new PerfTestNode(dir2, "/write/dir22");
+                    PerfTestNode *dir23 = new PerfTestNode(dir2, "/write/dir23");
+                    test_tree.push_back(dir21); // 4
                     test_tree.push_back(dir22);
-                    test_tree.push_back(dir23);
+                    test_tree.push_back(dir23); //6
 
                     cout << "case 2 initialized" << endl;
                     break;
@@ -217,7 +217,7 @@ namespace raftfs {
                 int i;
                 switch (next_cmd) {
                     case perf_mkdir:	// 0
-                        i = 1;
+                        i = 4;
                         do {
                             tmp_node = write_tree[i];
                             //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
@@ -234,7 +234,7 @@ namespace raftfs {
                             tmp_node = write_tree[i];
                             //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
                             ++i;
-                        } while (i < write_tree.size() && tmp_node->should_exist);
+                        } while (i < 4 && tmp_node->should_exist);
                         if (i == 4) {
                         	no_valid_cmd_cnt++;
                             continue;
