@@ -1,11 +1,11 @@
-Test on: Wed May  4 14:11:58 2016
+Test on: Wed May  4 19:48:51 2016
 
 ------------------------
 total cmds: 1000
-avg latency: 0.299
+avg latency: 0.292
 correct cmds: 1000
 total read cmds: 1000
-avg read latency: 0.299
+avg read latency: 0.292
 	 mkdir: 0
 	 createfile: 0
 	 delete: 0

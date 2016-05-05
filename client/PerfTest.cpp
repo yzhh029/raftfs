@@ -159,9 +159,9 @@ namespace raftfs {
                     PerfTestNode *dir21 = new PerfTestNode(dir2, "/write/dir21");
                     PerfTestNode *dir22 = new PerfTestNode(dir2, "/write/dir22");
                     PerfTestNode *dir23 = new PerfTestNode(dir2, "/write/dir23");
-                    test_tree.push_back(dir21); // 4
-                    test_tree.push_back(dir22);
-                    test_tree.push_back(dir23); //6
+                    write_tree.push_back(dir21); // 4
+                    write_tree.push_back(dir22);
+                    write_tree.push_back(dir23); //6
 
                     cout << "case 2 initialized" << endl;
                     break;
