@@ -10,6 +10,7 @@
 #include <protocol/TMultiplexedProtocol.h>
 
 #include <chrono>
+#include <iostream>
 
 using namespace std;
 using namespace raftfs::protocol;

@@ -21,6 +21,8 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace raftfs::filesystem;
 
+#define ENABLE_DBG_OUTPUT 0
+
 namespace raftfs {
     namespace server {
 
@@ -136,9 +138,10 @@ namespace raftfs {
                         ae_req.leader_commit_index = log.GetLastCommitIndex();
                         //-- Current log index at remote host.
                         ae_req.prev_log_index = remote->GetNextIndex() - 1;
-
+						#if(ENABLE_DBG_OUTPUT == 1)
                         cout << TimePointStr(Now()) << " ae req to " << id << " T:" << current_term
                             << " L:" << leader_id << " prev:" << ae_req.prev_log_index << " C:" << ae_req.leader_commit_index<< endl;
+						#endif
                         // found one or more new log entry, add them to the request
                         // TODO: limit maximum entry size to limit request size.
                         if (ae_req.prev_log_index < log.GetLastLogIndex()) {
@@ -147,9 +150,11 @@ namespace raftfs {
                             // Copy new entries into request.
                             ae_req.__set_entries(log.GetEntriesStartAt(ae_req.prev_log_index));
                             // Print out new entries for information.
+							#if(ENABLE_DBG_OUTPUT == 1)
                             for (auto &e : ae_req.entries) {
                                 cout << id << "   I:" << e.index << " " << e.op << " " << e.value << endl;
                             }
+							#endif
                         }
                         lock.unlock();
                         //-- Push entries to remote --
@@ -170,8 +175,10 @@ namespace raftfs {
                         }
                         lock.lock();
 
+						#if(ENABLE_DBG_OUTPUT == 1)
                         cout << TimePointStr(Now()) << " ae resp from " << id << " RT:" << ae_resp.term
                         << " S: " << ae_resp.success << endl;
+						#endif
                         // deal with response.
                         // have normal ae response
                         if (ae_resp.term == current_term) {
@@ -201,8 +208,10 @@ namespace raftfs {
                                     // update commit index
                                     if (commit_index != new_commit) {
                                         log.SetLastCommitIndex(new_commit);
+										#if(ENABLE_DBG_OUTPUT == 1)
                                         cout << TimePointStr(Now()) << " new log commit index " << new_commit << endl;
                                         cout << "log: " << endl << log << endl;
+										#endif
                                         fs_commit.notify_all();
                                     }
                                 } else {
@@ -303,7 +312,9 @@ namespace raftfs {
                 for (int64_t i = fs->GetCommitedIndex() + 1; i <= log.GetLastCommitIndex(); ++i) {
                     if ((IsLeader() && pending_entries[i].size() >= quorum_size) || IsFollower()) {
                         const Entry* e = log.GetEntry(i);
+						#if(ENABLE_DBG_OUTPUT == 1)
                         cout << TimePointStr(Now()) << " FS try apply " << e->index << " " << OpToStr(e->op) << " " << e->value << endl;
+						#endif
                         bool rt;
                         switch (e->op) {
                             case MetaOp::kMkdir: {
@@ -332,7 +343,9 @@ namespace raftfs {
                                 cout << "UNKNOWN fs op !!!" << e->op << endl;
                         }
                         commited = i;
+						#if(ENABLE_DBG_OUTPUT == 1)
                         fs->Print();
+						#endif
                     } else {
                         break;
                     }
@@ -484,9 +497,11 @@ namespace raftfs {
 
             }
 
+			#if(ENABLE_DBG_OUTPUT == 1)
             // debug output
             if (!req.entries.empty())
                 cout << "log: " << log << endl;
+			#endif
 
             resp.success = success;
             if (success)

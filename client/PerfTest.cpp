@@ -13,6 +13,7 @@
 #include <iomanip>      // std::put_time
 #include <ctime>        // std::time_t, struct std::tm, std::localtime
 #include <chrono>       // std::chrono::system_clock
+#include <iostream>
 #include "RaftFS.h"
 #include "../utils/time_utils.h"
 

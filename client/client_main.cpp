@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
 typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
-    para.max_cmds = 20;
+    para.max_cmds = 1000;
 #if(1)
     // Read / Write : 50%
     para.cmd_ratio[pcmd_type::perf_mkdir] = 10;
