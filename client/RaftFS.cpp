@@ -120,6 +120,30 @@ namespace raftfs {
             return resp.status;
         }
 
+
+        Status_ FSClient::Rmdir(const std::string &abs_dir) {
+            if (GetLeader() == -1) {
+                return Status::kNoLeader;
+            }
+            if (!leader_rpc) {
+                ResetRPCClient(leader_rpc, leader_sock, hosts[leader_id - 1]);
+            }
+
+            RmdirRequest req;
+            RmdirResponse resp;
+
+            req.dir = abs_dir;
+
+            try {
+                leader_rpc->Rmdir(resp, req);
+            } catch (TTransportException e) {
+                return Status::kCommError;
+            }
+
+            return resp.status;
+        }
+
+
         Status_ FSClient::ListDir(const std::string &abs_dir, std::vector<std::string> &dir_list) {
 
             if (!ConnectFollower())
@@ -187,7 +211,7 @@ namespace raftfs {
             return resp.status;
         }
 
-        Status_ FSClient::Delete(const std::string &path) {
+        Status_ FSClient::DeleteFile(const std::string &path) {
 
             if (GetLeader() == -1) {
                 return Status::kNoLeader;
@@ -198,7 +222,7 @@ namespace raftfs {
 
             req.path = path;
             try {
-                leader_rpc->Delete(resp, req);
+                leader_rpc->DeleteFile(resp, req);
             } catch (TTransportException e) {
                 return Status::kCommError;
             }

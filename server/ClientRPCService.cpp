@@ -24,7 +24,6 @@ namespace raftfs {
 
         void ClientRPCService::Mkdir(MkdirResponse &_return, const MkdirRequest &new_dir) {
 
-
             if (!FSNamespace::ValidatePath(new_dir.path)) {
                 _return.status = Status::kPathError;
                 return;
@@ -38,7 +37,23 @@ namespace raftfs {
 
             cout << " recv MKDIR " << new_dir.path << endl;
             _return.status = raft_state.OnMetaOperation(MetaOp::kMkdir, new_dir.path, nullptr);
+        }
 
+
+        void ClientRPCService::Rmdir(protocol::RmdirResponse &_return, const protocol::RmdirRequest &dir) {
+            if (!FSNamespace::ValidatePath(dir.dir)) {
+                _return.status = Status::kPathError;
+                return;
+            }
+
+            if (!raft_state.IsLeader()) {
+                _return.status = Status::kNotLeader;
+                _return.__set_leader_id(raft_state.GetLeader());
+                return ;
+            }
+
+            cout << " recv RMDIR " << dir.dir << endl;
+            _return.status = raft_state.OnMetaOperation(MetaOp::kRmdir, dir.dir, nullptr);
         }
 
 
@@ -69,7 +84,7 @@ namespace raftfs {
         }
 
 
-        void ClientRPCService::Delete(protocol::DeleteResponse &_return, const protocol::DeleteRequest &path) {
+        void ClientRPCService::DeleteFile(protocol::DeleteResponse &_return, const protocol::DeleteRequest &path) {
             if (!FSNamespace::ValidatePath(path.path)) {
                 _return.status = Status::kPathError;
                 return;

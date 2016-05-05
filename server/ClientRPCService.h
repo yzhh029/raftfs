@@ -23,10 +23,12 @@ namespace raftfs {
 
             void Mkdir(protocol::MkdirResponse &_return, const protocol::MkdirRequest &new_dir) override;
 
+            void Rmdir(protocol::RmdirResponse &_return, const protocol::RmdirRequest &dir) override;
+
             void CreateFile(protocol::CreateFileResponse &_return,
                                     const protocol::CreateFileRequest &new_file) override;
 
-            void Delete(protocol::DeleteResponse &_return, const protocol::DeleteRequest &path) override;
+            void DeleteFile(protocol::DeleteResponse &_return, const protocol::DeleteRequest &path) override;
 
             void GetFileInfo(protocol::FileInfoResponse &_return,
                                      const protocol::FileInfoRequest &file) override;

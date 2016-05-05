@@ -29,6 +29,16 @@ struct MkdirResponse {
 2: optional i32 leader_id;
 }
 
+struct RmdirRequest {
+1: required string dir;
+2: optional bool recursive;
+}
+
+struct RmdirResponse {
+1: required Status status;
+2: optional i32 leader_id;
+}
+
 struct CreateFileRequest {
 1: required string file_name;
 2: optional i32 mode;
@@ -78,8 +88,9 @@ struct TestCaseResponse {
 service ClientService {
     GetLeaderResponse GetLeader();
     MkdirResponse Mkdir(1: MkdirRequest new_dir);
+    RmdirResponse Rmdir(1: RmdirRequest dir);
     CreateFileResponse CreateFile(1: CreateFileRequest new_file);
-    DeleteResponse Delete(1: DeleteRequest path);
+    DeleteResponse DeleteFile(1: DeleteRequest path);
     FileInfoResponse GetFileInfo(1: FileInfoRequest file);
     ListDirResponse ListDir(1: ListDirRequest dir);
     TestCaseResponse InjectTestCase(1: TestCaseRequest req);
