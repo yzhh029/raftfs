@@ -43,6 +43,8 @@ void test_thread(Options* opt, PerfTest::PerfTestParameters param) {
 
 int main(int argc, char** argv) {
 
+    std::srand(time(0));
+
     Options opt(argc, argv);
     cout << "tt" << endl;
     FSClient client(opt);
@@ -79,12 +81,13 @@ int main(int argc, char** argv) {
 typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
-    para.max_cmds = 1000;
-#if(0)
+    para.max_cmds = 20;
+#if(1)
     // Read / Write : 50%
     para.cmd_ratio[pcmd_type::perf_mkdir] = 10;
+    para.cmd_ratio[pcmd_type::perf_rmdir] = 10;
     para.cmd_ratio[pcmd_type::perf_createfile] = 15;
-    para.cmd_ratio[pcmd_type::perf_delete] = 25;
+    para.cmd_ratio[pcmd_type::perf_delete] = 15;
     // Read Only : 50%
     para.cmd_ratio[pcmd_type::perf_listdir] = 25;
     para.cmd_ratio[pcmd_type::perf_getfinfo] = 25;

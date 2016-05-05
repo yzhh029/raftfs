@@ -30,11 +30,16 @@ namespace raftfs {
             // only for test purpose
             void CheckLeaders();
 
+            std::string GetFollowerName() const {
+                return follower_sock->getHost();
+            }
+
             Status_ Mkdir(const std::string &abs_dir);
             Status_ ListDir(const std::string &abs_dir, std::vector<std::string> &dir_list);
             Status_ GetFileInfo(const std::string &file_path, protocol::FileInfo &file_info);
             Status_ CreateFile(const std::string &file_path);
-            Status_ Delete(const std::string &path);
+            Status_ DeleteFile(const std::string &path);
+            Status_ Rmdir(const std::string &abs_dir);
 
         private:
             int32_t GetLeader();

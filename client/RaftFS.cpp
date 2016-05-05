@@ -25,7 +25,7 @@ namespace raftfs {
                   leader_id(-1)
                   //follower_id((rand() % hosts.size()) + 1)
         {
-        	std::srand(time(0));	// don't know why xinu11 has problem with this... follower_id is strange...
+        	//std::srand(time(0));	// don't know why xinu11 has problem with this... follower_id is strange...
         	follower_id = (rand() % hosts.size()) + 1;
             cout << " try to connect to " << follower_id << " " + hosts[follower_id - 1] << endl;
             ResetRPCClient(follower_rpc, follower_sock, hosts[follower_id - 1]);
@@ -70,13 +70,7 @@ namespace raftfs {
                 follower_rpc->GetLeader(resp);
                 if (resp.status == Status::kOK) {
                     leader_id = resp.leader_id;
-                    cout << " new leader is " << leader_id << " " << hosts.size() << endl;
-                    if(leader_id > hosts.size())  {
-                    	cout << "ERROR: leader_id is larger than listed in host file!!" << endl;
-                    	cout << "Please check if the correct hostfile is used!!" << endl;
-                    	assert(leader_id <= hosts.size());
-                    }
-                    cout << hosts[leader_id - 1] << endl;
+                    cout << " new leader is " << leader_id << " " << hosts[leader_id - 1] << endl;
                     ResetRPCClient(leader_rpc, leader_sock, hosts[leader_id - 1]);
 
                     // if current follower and leader are the same host
@@ -125,6 +119,30 @@ namespace raftfs {
             //cout << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
             return resp.status;
         }
+
+
+        Status_ FSClient::Rmdir(const std::string &abs_dir) {
+            if (GetLeader() == -1) {
+                return Status::kNoLeader;
+            }
+            if (!leader_rpc) {
+                ResetRPCClient(leader_rpc, leader_sock, hosts[leader_id - 1]);
+            }
+
+            RmdirRequest req;
+            RmdirResponse resp;
+
+            req.dir = abs_dir;
+
+            try {
+                leader_rpc->Rmdir(resp, req);
+            } catch (TTransportException e) {
+                return Status::kCommError;
+            }
+
+            return resp.status;
+        }
+
 
         Status_ FSClient::ListDir(const std::string &abs_dir, std::vector<std::string> &dir_list) {
 
@@ -193,7 +211,7 @@ namespace raftfs {
             return resp.status;
         }
 
-        Status_ FSClient::Delete(const std::string &path) {
+        Status_ FSClient::DeleteFile(const std::string &path) {
 
             if (GetLeader() == -1) {
                 return Status::kNoLeader;
@@ -204,7 +222,7 @@ namespace raftfs {
 
             req.path = path;
             try {
-                leader_rpc->Delete(resp, req);
+                leader_rpc->DeleteFile(resp, req);
             } catch (TTransportException e) {
                 return Status::kCommError;
             }

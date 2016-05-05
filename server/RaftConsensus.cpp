@@ -309,7 +309,8 @@ namespace raftfs {
                             case MetaOp::kMkdir: {
                                 // todo maybe add another entry field called client/operator
                                 rt = fs->MakeDir(e->value, string("unknown"), true);
-                                cout << TimePointStr(Now()) << " commit I:" << e->index << " mkdir " << e->value << " " << rt << endl;
+                                cout << TimePointStr(Now()) << " commit I:" << e->index << " mkdir " << e->value <<
+                                " " << rt << endl;
                                 break;
                             }
                             case MetaOp::kRmdir: {

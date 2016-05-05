@@ -228,6 +228,18 @@ namespace raftfs {
                             continue;
                         }
                         break;
+                    case perf_rmdir:
+                        i = 4;
+                        do {
+                            tmp_node = write_tree[i];
+                            //cout << "i= " << i << " " << "exist: " << tmp_node->should_exist << endl;
+                            ++i;
+                        } while (i < write_tree.size() && !tmp_node->should_exist);
+                        if (i == write_tree.size()) {
+                            no_valid_cmd_cnt++;
+                            continue;
+                        }
+                        break;
                     case perf_createfile:	// 3
                         i = 1;
                         do {
@@ -293,8 +305,25 @@ namespace raftfs {
                         	correct_write_latency += tmp_dura;
                         }
                         // Record dir exists or not
-                        cout << "mkdir " << tmp_node->fullname << " done " << endl;	// debug usage
+                        //cout << "mkdir " << tmp_node->fullname << " done " << endl;	// debug usage
                         tmp_node->should_exist = (rtn == Status_::kOK);
+
+                        break;
+                    }
+                    case perf_rmdir: {
+                        Tp start = Now();
+                        rtn = client->Rmdir(tmp_node->fullname);
+                        tmp_dura = Now() - start;
+                        //total_write_latency += Now() - start;
+                        total_write_latency += tmp_dura;
+                        ++write_count;
+                        if(rtn == Status_::kOK) {	// acc correct write latency
+                            correct_write_count++;
+                            correct_write_latency += tmp_dura;
+                        }
+                        // Record dir exists or not
+                        //cout << "mkdir " << tmp_node->fullname << " done " << endl;	// debug usage
+                        tmp_node->should_exist = (rtn != Status_::kOK);
 
                         break;
                     }
@@ -336,7 +365,7 @@ namespace raftfs {
                     }
                     case perf_delete: {
                         Tp start = Now();
-                        rtn = client->Delete(tmp_node->fullname);
+                        rtn = client->DeleteFile(tmp_node->fullname);
                         //total_write_latency += Now() - start;
                         tmp_dura = Now() - start;
                         total_write_latency += tmp_dura;
@@ -404,7 +433,7 @@ namespace raftfs {
         }
 
         void PerfTest::result_write_stats() {
-            int64_t num_readonly = 0, num_readwrite = 0,
+            int64_t num_readonly = 0, num_readwrite = 0, num_rmdir = 0,
                     num_mkdir = 0, num_listdir = 0, num_getinfo = 0,
                     num_create_file = 0, num_delete = 0;
             int64_t cmd_correct = 0;
@@ -418,7 +447,9 @@ namespace raftfs {
                     case perf_mkdir:
                         num_mkdir++;
                         break;
-
+                    case perf_rmdir:
+                        num_rmdir++;
+                        break;
                     case perf_listdir:
                         num_listdir++;
                         break;
@@ -441,7 +472,7 @@ namespace raftfs {
                 }
             }
             result_file << "------------------------" << endl;
-            //result_file << "total cmds: " << records.size() << endl;
+            result_file << "follower: " << client->GetFollowerName() << endl;
             result_file << "total cmds: " << read_count + write_count << endl;
             result_file << "avg latency: " <<
             duration_cast<milliseconds>(total_read_latency + total_write_latency).count()

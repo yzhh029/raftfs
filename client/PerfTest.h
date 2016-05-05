@@ -37,6 +37,7 @@ namespace raftfs {
             // Test record structures
         	enum perf_cmd_type {
                 perf_mkdir = 0,
+                perf_rmdir,
                 perf_listdir,
                 perf_getfinfo,
                 perf_createfile,
@@ -82,45 +83,12 @@ namespace raftfs {
             void result_write_stats();	// TODO: finish this.
 
 
-
-            /* Things from FSClinet that we may need or not to do tests...
-            // only for test purpose
-            void CheckLeaders();
-
-            Status_ Mkdir(const std::string &abs_dir);
-            Status_ ListDir(const std::string &abs_dir, std::vector<std::string> &dir_list);
-            Status_ GetFileInfo(const std::string &file_path, protocol::FileInfo &file_info);
-            Status_ CreateFile(const std::string &file_path);
-            Status_ Delete(const std::string &path);
-
-            int port;
-            int32_t leader_id;
-            int32_t follower_id;
-            std::vector<std::string> hosts;
-
-            boost::shared_ptr<THt::TSocket> leader_sock;
-            boost::shared_ptr<THt::TSocket> follower_sock;
-            std::shared_ptr<protocol::ClientServiceClient> leader_rpc;
-            std::shared_ptr<protocol::ClientServiceClient> follower_rpc;
-            */
-
             chrono::system_clock::duration total_read_latency; // in us
             int64_t read_count = 0;
             chrono::system_clock::duration total_write_latency; // in us
             int64_t write_count = 0;
             chrono::system_clock::duration correct_write_latency; // in us
             int64_t correct_write_count = 0;
-        private:
-            /*
-            int32_t GetLeader();
-            bool ConnectFollower();
-
-            void ResetSock(boost::shared_ptr<THt::TSocket> &sock, std::string host);
-
-            bool ResetRPCClient(std::shared_ptr<protocol::ClientServiceClient> &client,
-                                boost::shared_ptr<THt::TSocket> &sock,
-                                std::string host);
-            */
 
         private:
             FSClient* client;
