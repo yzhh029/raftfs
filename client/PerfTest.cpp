@@ -441,7 +441,7 @@ namespace raftfs {
                 }
             }
             result_file << "------------------------" << endl;
-            //result_file << "total cmds: " << records.size() << endl;
+            result_file << "follower: " << client->GetFollowerName() << endl;
             result_file << "total cmds: " << read_count + write_count << endl;
             result_file << "avg latency: " <<
             duration_cast<milliseconds>(total_read_latency + total_write_latency).count()
