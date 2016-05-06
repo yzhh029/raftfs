@@ -21,7 +21,7 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace raftfs::filesystem;
 
-#define ENABLE_DBG_OUTPUT 0
+#define ENABLE_DBG_OUTPUT 1
 
 namespace raftfs {
     namespace server {

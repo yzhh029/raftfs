@@ -12,7 +12,7 @@ using namespace std;
 using namespace raftfs::protocol;
 using namespace raftfs::filesystem;
 
-#define ENABLE_DBG_OUTPUT 0
+#define ENABLE_DBG_OUTPUT 1
 
 namespace raftfs {
     namespace server {
