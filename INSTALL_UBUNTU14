@@ -71,8 +71,19 @@ raftfs/docker$ ./dockercompile.sh
 raftfs/docker$ ./create_run_container.sh	# this will take a while
 raftfs/docker$ 
 
-# Now we can use docker to test programs.
+# Now we can use docker to test programs, and can see running containers
 # If anything goes wrong, please check disk space and necessary packages...
+
+# Running docker containers are like following:
+raftfs/docker$ sudo docker ps -a -q
+c5b88a8fa094
+fd2ea9a42b48
+2d2b57dc7217
+# To stop containers, do following:
+raftfs/docker$ sudo docker stop $(sudo docker ps -a -q)
+# To remove containers, do following: 
+raftfs/docker$ sudo docker rm $(sudo docker ps -a -q)
+
 
 # Blockade installation
 raftfs/docker$ sudo apt-get install python-pip
@@ -85,4 +96,13 @@ c1              464b387053b8    UP      172.17.0.4      NORMAL
 c2              e2a8555e4c06    UP      172.17.0.3      NORMAL                
 c3              1f1b1bc78932    UP      172.17.0.2      NORMAL   
 
+# To check console output, do following:
+raftfs/docker/blockade$ sudo blockade logs c3 | tail -n 30 
+raftfs/docker/blockade$ sudo blockade logs c2 | tail -n 30 
+raftfs/docker/blockade$ sudo blockade logs c1 | tail -n 30 
+
+# To stop blockade, do following:
+raftfs/docker/blockade$ sudo blockade stop -all
+raftfs/docker/blockade$ sudo blockade status
+raftfs/docker/blockade$ sudo blockade destroy
 
