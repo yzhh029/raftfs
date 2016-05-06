@@ -1,4 +1,4 @@
-#=====================================================================                                                         
+#===================================================================== 
 #  README - CS505 Spring 2016 - Final Project
 #  Zhihao Yao, yao86@purdue.edu
 #  Cheng Huang, huang630@purdue.edu
@@ -11,6 +11,8 @@
       - C++ compiler supports C++11 (4.9 tested)
       - Apache Thrift 0.9.3
 
+    - Please refer to INSTALL_UBUNTU14 for more environment setup.
+
     - Compile:
       - Install required library listed above.
       - Compile Thrift-generated includes / program codes:
@@ -22,21 +24,33 @@
         $ make all
 
     - Execution in Xinu lab
-      # TODO: Procedures on Xinu
+      - There is a version of executables in bin/ folder.
+        The file "hosts.txt" contains all server names that we will run on.
+        (Note "hosts.txt" current contains "Xinu01", "Xinu02", "Xinu03".)
+      - On hosts "Xinu01", "Xinu02", and "Xinu03", begin server program:
+        $ ./raftfs -f hosts.txt -p 6000
+      - Use another console window to run client test program: (e.g. "Xinu09")
+        $ ./fsclient ./fsclient -f hosts.txt -p 6000
+      - After execution, use "Ctrl-C" to terminate server program in each 
+        console.
 
     - Execution with Docker
       See docker/Docker.md
 
 (b) File and directory list:
     ------------------------------------------------------------------
-    utils/          :  Utility functions
-     - option.*     :  Handle command line options.
+    /               :  source main entry
+     - README            :  This file you are currently reading.
+     - INSTALL_UBUNTU14  :  Setup procedures of a fresh intalled Ubuntu14
+     - CMakeLists.txt    :  Cmake build configuration
+     - dockercompile.sh  :  script to complie for Docker execution.
+     - hosts.txt         :  Default 3-server execution list.
     ------------------------------------------------------------------
     server/         :  Raft servers
      - server_main.cpp   :  **Program main entry**
      - RaftConsensus.*   :  Functions to perform Raft Consensus
      - RaftMetaServer.*  :  Threads to handle state machine
-     - ClientRPCServer.* :  Functions for client's getting info.
+     - ClientRPCService.*:  Functions for client's getting info.
      - RaftRPCService.*  :  Def of RPC calls
     ------------------------------------------------------------------
     protocol/       :  Thrift's protocol def and generated files
@@ -46,10 +60,13 @@
      - Filesystem.thrift :  Filesystem related def.
      - *.cpp; *.h        :  Thrift generated files.
     ------------------------------------------------------------------
-    test/           :  Unit tests and Performance tests
+    filesystem/     :  Virtual file system / namespace
+     - FSNamespace.*     :  Virtual file system top layer
+     - INode.*           :  file / dir element.
     ------------------------------------------------------------------
     client/			:  Client of the DFS
      - client_main.cpp   :  Client main entry.
+                            Also we call the performance tests here.
      - RaftFS.*          :  Client of DFS functions.
     ------------------------------------------------------------------
     storage/        :  Log / Storage related functions
@@ -58,4 +75,14 @@
     filesystem/     :  Namespace and Inode for file system
      - FSNamespace.*     :  Namespace class and functions
      - INode.*           :  INode definition for each file and dir.
-     
+    ------------------------------------------------------------------
+    utils/          :  Used utilities.
+     - Options.*         :  Commandline parser.
+     - time_utils.h      :  Formatted time output.
+    ------------------------------------------------------------------
+    test/           :  Unit tests
+    ------------------------------------------------------------------
+    log_perf_tests/ :  A set of performance test results.
+    ------------------------------------------------------------------
+    docker/         :  Docker execution files.
+

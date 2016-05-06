@@ -1,0 +1,76 @@
+1. Environment Setup
+# -----------------------------
+# C++ build-essential
+$ sudo apt-get update
+$ sudo apt-get install gcc-4.8 g++4.8 build-essential libssl-dev 
+
+# -----------------------------
+# Cmake : Not using default one from repository. Need 3.3 up.
+# May take 5~10 minutes.
+$ wget https://cmake.org/files/v3.4/cmake-3.4.3.tar.gz
+$ tar -xzvf cmake-3.4.3.tar.gz
+$ cd cmake-3.4.3/
+cmake-3.4.3/$ sudo ./bootstrap && make && sudo make install
+cmake-3.4.3/$ cmake --version  		# should see 3.4.3
+cmake-3.4.3/$ cd ..
+
+# ----------------------------
+# Boost lib -- 267MB download in Ubuntu 14
+$ sudo apt-get install libboost1.55-all-dev
+
+# ----------------------------
+# Apache Thrift Installtion
+# Ref: https://thrift.apache.org/docs/BuildingFromSource
+$ wget http://mirror.tcpdiag.net/apache/thrift/0.9.3/thrift-0.9.3.tar.gz
+$ tar -xzvf thrift-0.9.3.tar.gz
+$ cd thrift-0.9.3/
+thrift-0.9.3$ ./configure CXXFLAGS='-g -O2' CFLAGS='-g -O2'
+thrift-0.9.3$ make
+thrift-0.9.3$ sudo make install
+thrift-0.9.3$ cd ..
+$ thrift --version
+
+# ---------------------------
+# Build program file.
+$ tar -xzvf raftfs.tgz
+raftfs$ cd protocol
+raftfs/protocol$ ./compileThrift.sh		# should see generated CPPs in the folder
+raftfs/protocol$ cd ..
+raftfs$ cmake .
+raftfs$ make
+
+# -----------------------------
+2. Program execution in Xinu Lab
+ - Upload "fsclient", "raftfs", and "hosts.txt" to xinu lab in a folder.
+   (Note "hosts.txt" current contains "Xinu01", "Xinu02", "Xinu03".) 
+ - On hosts "Xinu01", "Xinu02", and "Xinu03", begin server program:
+   $ ./raftfs -f hosts.txt -p 6000
+ - Use another console window to run client test program: (e.g. "Xinu09")
+   $ ./fsclient ./fsclient -f hosts.txt -p 6000
+ - After execution, use "Ctrl-C" to terminate server program in each console.
+
+
+# ----------------------------
+3. Docker installation
+# Ref: https://docs.docker.com/engine/installation/linux/ubuntulinux/
+
+# Docker prerequisites / installation
+$ sudo apt-get install linux-image-extra-$(uname -r)
+$ sudo apt-get install apparmor
+$ sudo vi /etc/apt/sources.list.d/docker.list
+  --> Then add one line: 
+  "deb https://apt.dockerproject.org/repo ubuntu-trusty main"
+$ sudo apt-get update 		# must update repository. Ignore the public key error.
+$ sudo apt-get install docker-engine
+$ sudo service docker start
+$ sudo docker run hello-world
+
+# Prepare execution with docker
+raftfs$ cd docker
+raftfs/docker$ ./dockercompile.sh
+raftfs/docker$ ./create_run_container.sh	# this will take a while
+raftfs/docker$ 
+
+# Now we can use docker to test programs.
+
+
