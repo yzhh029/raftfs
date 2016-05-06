@@ -43,7 +43,6 @@
      - README            :  This file you are currently reading.
      - INSTALL_UBUNTU14  :  Setup procedures of a fresh intalled Ubuntu14
      - CMakeLists.txt    :  Cmake build configuration
-     - dockercompile.sh  :  script to complie for Docker execution.
      - hosts.txt         :  Default 3-server execution list.
     ------------------------------------------------------------------
     server/         :  Raft servers
