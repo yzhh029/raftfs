@@ -72,5 +72,17 @@ raftfs/docker$ ./create_run_container.sh	# this will take a while
 raftfs/docker$ 
 
 # Now we can use docker to test programs.
+# If anything goes wrong, please check disk space and necessary packages...
+
+# Blockade installation
+raftfs/docker$ sudo apt-get install python-pip
+raftfs/docker$ sudo pip install blockade
+raftfs/docker$ cd blockade
+raftfs/docker/blockade$ sudo blockade up
+# Then you should see following info indicating dockers up
+NODE            CONTAINER ID    STATUS  IP              NETWORK    PARTITION  
+c1              464b387053b8    UP      172.17.0.4      NORMAL                
+c2              e2a8555e4c06    UP      172.17.0.3      NORMAL                
+c3              1f1b1bc78932    UP      172.17.0.2      NORMAL   
 
 
