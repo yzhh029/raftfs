@@ -82,7 +82,7 @@ namespace raftfs {
             INodeDirectory* current = root.get();
 
             // todo find other way to validate path
-            assert(abs_dir[0] == '/');
+            //assert(abs_dir[0] == '/');
 
             auto dir_split = SplitPath(abs_dir);
 

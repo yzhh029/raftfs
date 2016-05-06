@@ -10,6 +10,7 @@
 #include "RaftFS.h"
 #include "../utils/Options.h"
 #include "PerfTest.h"
+#include "../utils/time_utils.h"
 
 
 
@@ -81,8 +82,8 @@ int main(int argc, char** argv) {
 typedef PerfTest::perf_cmd_type pcmd_type;
 
     PerfTest::PerfTestParameters para;
-    para.max_cmds = 1000;
-#if(1)
+    para.max_cmds = 500;
+#if(0)
     // Read / Write : 50%
     para.cmd_ratio[pcmd_type::perf_mkdir] = 10;
     para.cmd_ratio[pcmd_type::perf_rmdir] = 10;
@@ -119,8 +120,9 @@ typedef PerfTest::perf_cmd_type pcmd_type;
 
     vector<thread> tester;
 
-    int client_num = 1	;
+    int client_num = 3	;
 
+    Tp start = Now();
     for (int i = 0; i < client_num; ++i) {
         para.filename = to_string(i) + "perf_test.log";
         tester.push_back(thread(test_thread, &opt, para));
@@ -130,6 +132,7 @@ typedef PerfTest::perf_cmd_type pcmd_type;
         t.join();
     }
 
+    //cout << "test end in " << chrono::duration_cast<chrono::milliseconds>(Now() - start).count() << " ms" << endl;
 #endif
 
     return 0;

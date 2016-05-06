@@ -345,7 +345,8 @@ namespace raftfs {
                         commited = i;
 						#if(ENABLE_DBG_OUTPUT == 1)
                         fs->Print();
-						#endif
+                        #endif
+                        fs->Print();
                     } else {
                         break;
                     }

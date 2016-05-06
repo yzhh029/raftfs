@@ -120,10 +120,12 @@ namespace raftfs {
                     file13->should_exist = true;
 
                     if (do_rpc) {
-                        assert(Status_::kOK == client->Mkdir("/read"));
-                        assert(Status_::kOK == client->CreateFile("/read/file11"));
-                        assert(Status_::kOK == client->CreateFile("/read/file12"));
-                        assert(Status_::kOK == client->CreateFile("/read/file13"));
+
+                        cout << "do rpc" << endl;
+                        client->Mkdir("/read");
+                        client->CreateFile("/read/file11");
+                        client->CreateFile("/read/file12");
+                        client->CreateFile("/read/file13");
                     }
 
 
@@ -141,10 +143,7 @@ namespace raftfs {
                     PerfTestNode *dir2 = new PerfTestNode(nullptr, "/write");
                     if (do_rpc)
                     {
-                    	int tmp_sta = client->Mkdir("/write");
-                    	cout << tmp_sta << endl;
-                    	// Have problem here if create...
-                    	assert(Status_::kOK == client->Mkdir("/write"));
+                    	client->Mkdir("/write");
                     }
                     dir2->should_exist = true;
                     write_tree.push_back(dir2); //0
@@ -187,6 +186,7 @@ namespace raftfs {
             int no_valid_cmd_cnt = 0;
 
             cout << "Perf Test Begin: " << endl;
+            Tp t_s = Now();
 
             // TODO: count total time since all results now are pushed into mem
             while (cmd_executed < cmd_total_to_run) {
@@ -400,6 +400,8 @@ namespace raftfs {
                 cmd_executed++;
                 test_node_index++;
             }
+
+            cout << "test end in " << chrono::duration_cast<chrono::milliseconds>(Now() - t_s).count() << " ms" << endl;
 
             cout << "test finished" << endl;
 			// Print write tree status to verify server side result manually.
